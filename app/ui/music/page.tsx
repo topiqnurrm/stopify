@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, List, ChevronLeft, ChevronRight, Music, Video } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, List, ChevronLeft, ChevronRight, Music, Video, Search, X } from 'lucide-react';
 
 interface Song {
   id: number;
   judul: string;
-  type: string;
+  type?: string;
   link: string;
-  ss: string;
+  ss?: string;
   tahun: string;
   images: string[];
   playlist: string[];
@@ -29,6 +29,8 @@ export default function MusicPage() {
   const [notification, setNotification] = useState<string>('');
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -37,7 +39,6 @@ export default function MusicPage() {
     const savedQueue = localStorage.getItem('stopify_queue');
     const savedCurrentSong = localStorage.getItem('stopify_current_song');
     
-    // Load saved queue if exists
     if (savedQueue) {
       try {
         const parsedQueue = JSON.parse(savedQueue);
@@ -47,7 +48,6 @@ export default function MusicPage() {
       }
     }
 
-    // Load saved current song if exists
     if (savedCurrentSong) {
       try {
         const parsedSong = JSON.parse(savedCurrentSong);
@@ -65,7 +65,6 @@ export default function MusicPage() {
     if (queue.length > 0) {
       localStorage.setItem('stopify_queue', JSON.stringify(queue));
     } else {
-      // If queue is empty, remove from localStorage
       localStorage.removeItem('stopify_queue');
     }
   }, [queue]);
@@ -83,7 +82,6 @@ export default function MusicPage() {
       const data = await response.json();
       setSongs(data);
       
-      // Only set first song if no current song exists
       if (!currentSong && data.length > 0) {
         setCurrentSong(data[0]);
       }
@@ -92,11 +90,33 @@ export default function MusicPage() {
     }
   };
 
-  const filteredSongs = selectedPlaylist === 'all' 
-    ? songs 
-    : songs.filter(song => song.playlist.includes(selectedPlaylist));
+  // Convert Google Drive link to direct download link
+  const getDirectAudioUrl = (url: string) => {
+    if (!url) return '';
+    
+    // Check if it's a Google Drive link
+    if (url.includes('drive.google.com')) {
+      const fileIdMatch = url.match(/\/d\/([^/]+)/);
+      if (fileIdMatch) {
+        const fileId = fileIdMatch[1];
+        return `https://drive.google.com/uc?export=download&id=${fileId}`;
+      }
+    }
+    
+    // Return as is for regular URLs
+    return url;
+  };
 
-  const playlists = ['all', 'MYLK', 'CB', 'SED', 'NATI', 's', 'd', ];
+  const filteredSongs = songs.filter(song => {
+    const matchesPlaylist = selectedPlaylist === 'all' || song.playlist.includes(selectedPlaylist);
+    const matchesSearch = searchQuery === '' || 
+      song.judul.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      song.tahun.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return matchesPlaylist && matchesSearch;
+  });
+
+  const playlists = ['all', 'MYLK', 'CB', 'SED', 'NATI'];
 
   const showNotification = (message: string) => {
     setNotification(message);
@@ -117,7 +137,6 @@ export default function MusicPage() {
   const playNext = () => {
     if (!currentSong) return;
     
-    // Determine which list to use for playback
     let playQueue: Song[];
     if (isShuffled && shuffledOrder.length > 0) {
       playQueue = shuffledOrder;
@@ -136,7 +155,6 @@ export default function MusicPage() {
   const playPrevious = () => {
     if (!currentSong) return;
     
-    // Determine which list to use for playback
     let playQueue: Song[];
     if (isShuffled && shuffledOrder.length > 0) {
       playQueue = shuffledOrder;
@@ -154,16 +172,13 @@ export default function MusicPage() {
 
   const toggleShuffle = () => {
     if (!isShuffled) {
-      // Activate shuffle - deactivate repeat
       setRepeatMode('off');
-      
       const playQueue = queue.length > 0 ? queue : songs;
       const shuffled = [...playQueue].sort(() => Math.random() - 0.5);
       setShuffledOrder(shuffled);
       setIsShuffled(true);
-      showNotification('🔀 Shuffle diaktifkan (Repeat dimatikan)');
+      showNotification('🔀 Shuffle diaktifkan');
     } else {
-      // Deactivate shuffle
       setShuffledOrder([]);
       setIsShuffled(false);
       showNotification('🔀 Shuffle dimatikan');
@@ -175,7 +190,6 @@ export default function MusicPage() {
     const currentIndex = modes.indexOf(repeatMode);
     const newMode = modes[(currentIndex + 1) % modes.length];
     
-    // If activating repeat, deactivate shuffle
     if (newMode !== 'off' && isShuffled) {
       setIsShuffled(false);
       setShuffledOrder([]);
@@ -185,8 +199,8 @@ export default function MusicPage() {
     
     const messages = {
       off: '🔁 Repeat dimatikan',
-      all: '🔁 Repeat semua lagu (Shuffle dimatikan)',
-      one: '🔁 Repeat lagu ini (Shuffle dimatikan)'
+      all: '🔁 Repeat semua lagu',
+      one: '🔁 Repeat lagu ini'
     };
     showNotification(messages[newMode]);
   };
@@ -270,7 +284,7 @@ export default function MusicPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-900 text-white relative">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white relative">
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-in">
@@ -278,11 +292,47 @@ export default function MusicPage() {
         </div>
       )}
 
-      {/* Sidebar */}
-      <div className={`${isSidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 bg-gray-800 overflow-hidden`}>
-        <div className="p-4">
+      {/* Sidebar - Mobile: Full screen overlay, Desktop: Side panel */}
+      <div className={`
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0
+        ${isSidebarOpen ? 'md:w-80' : 'md:w-0'}
+        fixed md:relative inset-0 md:inset-auto
+        transition-all duration-300 bg-gray-800 overflow-hidden z-40
+      `}>
+        <div className="p-4 h-full overflow-y-auto">
+          {/* Mobile close button */}
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="md:hidden absolute top-4 right-4 p-2 hover:bg-gray-700 rounded"
+          >
+            <X size={24} />
+          </button>
+
           <h2 className="text-xl font-bold mb-4">🎵 Playlist</h2>
           
+          {/* Search Bar */}
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="Cari lagu..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 bg-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Playlist Filter */}
           <div className="flex gap-2 mb-4 flex-wrap">
             {playlists.map(pl => (
@@ -301,68 +351,84 @@ export default function MusicPage() {
           </div>
 
           {/* Song List */}
-          <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
-            {filteredSongs.map((song) => (
-              <div
-                key={song.id}
-                className={`p-3 rounded cursor-pointer hover:bg-gray-700 group ${
-                  currentSong?.id === song.id ? 'bg-gray-700 border-l-4 border-blue-500' : ''
-                }`}
-              >
-                <div 
-                  onClick={() => {
-                    setCurrentSong(song);
-                    setIsPlaying(true);
-                  }}
-                  className="flex-1"
-                >
-                  <div className="font-semibold text-sm">{song.judul}</div>
-                  <div className="text-xs text-gray-400">{song.tahun}</div>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    addToQueue(song);
-                  }}
-                  className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  ➕ Tambah ke Antrian
-                </button>
+          <div className="space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto pb-20 md:pb-0">
+            {filteredSongs.length === 0 ? (
+              <div className="text-center text-gray-400 py-8">
+                <Music size={48} className="mx-auto mb-4 opacity-50" />
+                <p className="text-sm">Tidak ada lagu ditemukan</p>
               </div>
-            ))}
+            ) : (
+              filteredSongs.map((song) => (
+                <div
+                  key={song.id}
+                  className={`p-3 rounded hover:bg-gray-700 ${
+                    currentSong?.id === song.id ? 'bg-gray-700 border-l-4 border-blue-500' : ''
+                  }`}
+                >
+                  <div 
+                    onClick={() => {
+                      setCurrentSong(song);
+                      setIsPlaying(true);
+                      setIsSidebarOpen(false); // Close sidebar on mobile after selecting
+                    }}
+                    className="flex-1 cursor-pointer"
+                  >
+                    <div className="font-semibold text-sm">{song.judul}</div>
+                    <div className="text-xs text-gray-400">{song.tahun}</div>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToQueue(song);
+                    }}
+                    className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded transition-colors"
+                  >
+                    ➕ Tambah ke Antrian
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
 
+      {/* Overlay for mobile when sidebar is open */}
+      {isSidebarOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="bg-gray-800 p-4 flex items-center justify-between">
+        <div className="bg-gray-800 p-3 md:p-4 flex items-center justify-between">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-2 hover:bg-gray-700 rounded"
           >
-            {isSidebarOpen ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
+            {isSidebarOpen ? <ChevronLeft size={20} className="md:w-6 md:h-6" /> : <ChevronRight size={20} className="md:w-6 md:h-6" />}
           </button>
           
           <div className="flex gap-2">
             <button
               onClick={() => setMode('audio')}
-              className={`px-4 py-2 rounded flex items-center gap-2 ${
+              className={`px-2 md:px-4 py-2 rounded flex items-center gap-1 md:gap-2 text-sm ${
                 mode === 'audio' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'
               }`}
             >
-              <Music size={20} />
-              Audio
+              <Music size={16} className="md:w-5 md:h-5" />
+              <span className="hidden md:inline">Audio</span>
             </button>
             <button
               onClick={() => setMode('video')}
-              className={`px-4 py-2 rounded flex items-center gap-2 ${
+              className={`px-2 md:px-4 py-2 rounded flex items-center gap-1 md:gap-2 text-sm ${
                 mode === 'video' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'
               }`}
             >
-              <Video size={20} />
-              Video
+              <Video size={16} className="md:w-5 md:h-5" />
+              <span className="hidden md:inline">Video</span>
             </button>
           </div>
 
@@ -370,7 +436,7 @@ export default function MusicPage() {
             onClick={() => setShowQueue(!showQueue)}
             className="p-2 hover:bg-gray-700 rounded relative"
           >
-            <List size={24} />
+            <List size={20} className="md:w-6 md:h-6" />
             {queue.length > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                 {queue.length}
@@ -380,7 +446,7 @@ export default function MusicPage() {
         </div>
 
         {/* Player Area */}
-        <div className="flex-1 flex items-center justify-center bg-black p-8">
+        <div className="flex-1 flex items-center justify-center bg-black p-4 md:p-8 overflow-hidden">
           {currentSong && (
             <div className="w-full max-w-4xl">
               {mode === 'video' ? (
@@ -394,14 +460,14 @@ export default function MusicPage() {
                 </div>
               ) : (
                 <div className="text-center">
-                  <div className="w-64 h-64 mx-auto bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center mb-8 shadow-2xl">
-                    <Music size={120} />
+                  <div className="w-48 h-48 md:w-64 md:h-64 mx-auto bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center mb-6 md:mb-8 shadow-2xl">
+                    <Music size={80} className="md:w-[120px] md:h-[120px]" />
                   </div>
-                  <h1 className="text-3xl font-bold mb-2">{currentSong.judul}</h1>
-                  <p className="text-gray-400 text-lg">{currentSong.tahun}</p>
+                  <h1 className="text-xl md:text-3xl font-bold mb-2 px-4">{currentSong.judul}</h1>
+                  <p className="text-gray-400 text-sm md:text-lg">{currentSong.tahun}</p>
                   <audio
                     ref={audioRef}
-                    src={currentSong.images[0]}
+                    src={getDirectAudioUrl(currentSong.images[0])}
                     onEnded={handleAudioEnded}
                     onTimeUpdate={handleTimeUpdate}
                     onLoadedMetadata={handleLoadedMetadata}
@@ -413,11 +479,11 @@ export default function MusicPage() {
         </div>
 
         {/* Controls */}
-        <div className="bg-gray-800 p-6">
+        <div className="bg-gray-800 p-4 md:p-6">
           <div className="max-w-4xl mx-auto">
             {/* Progress Bar - Only show in audio mode */}
             {mode === 'audio' && currentSong && (
-              <div className="mb-6">
+              <div className="mb-4 md:mb-6">
                 <input
                   type="range"
                   min="0"
@@ -436,7 +502,7 @@ export default function MusicPage() {
               </div>
             )}
 
-            <div className="flex items-center justify-center gap-6 mb-4">
+            <div className="flex items-center justify-center gap-3 md:gap-6 mb-3 md:mb-4">
               <button
                 onClick={toggleShuffle}
                 className={`p-2 rounded hover:bg-gray-700 ${
@@ -444,7 +510,7 @@ export default function MusicPage() {
                 }`}
                 title={isShuffled ? 'Shuffle: Aktif' : 'Shuffle: Nonaktif'}
               >
-                <Shuffle size={20} />
+                <Shuffle size={18} className="md:w-5 md:h-5" />
               </button>
               
               <button
@@ -452,15 +518,15 @@ export default function MusicPage() {
                 className="p-2 rounded hover:bg-gray-700"
                 title="Previous"
               >
-                <SkipBack size={28} />
+                <SkipBack size={24} className="md:w-7 md:h-7" />
               </button>
               
               <button
                 onClick={togglePlay}
-                className="p-4 bg-blue-600 rounded-full hover:bg-blue-700"
+                className="p-3 md:p-4 bg-blue-600 rounded-full hover:bg-blue-700"
                 title={isPlaying ? 'Pause' : 'Play'}
               >
-                {isPlaying ? <Pause size={32} /> : <Play size={32} />}
+                {isPlaying ? <Pause size={28} className="md:w-8 md:h-8" /> : <Play size={28} className="md:w-8 md:h-8" />}
               </button>
               
               <button
@@ -468,7 +534,7 @@ export default function MusicPage() {
                 className="p-2 rounded hover:bg-gray-700"
                 title="Next"
               >
-                <SkipForward size={28} />
+                <SkipForward size={24} className="md:w-7 md:h-7" />
               </button>
               
               <button
@@ -478,7 +544,7 @@ export default function MusicPage() {
                 }`}
                 title={`Repeat: ${repeatMode === 'off' ? 'Nonaktif' : repeatMode === 'all' ? 'Semua' : 'Satu'}`}
               >
-                <Repeat size={20} />
+                <Repeat size={18} className="md:w-5 md:h-5" />
                 {repeatMode === 'one' && (
                   <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
                     1
@@ -488,22 +554,22 @@ export default function MusicPage() {
             </div>
             
             {currentSong && (
-              <div className="text-center text-sm text-gray-400">
-                <div>Now Playing: {currentSong.judul}</div>
-                <div className="flex items-center justify-center gap-4 mt-2 text-xs">
+              <div className="text-center text-xs md:text-sm text-gray-400">
+                <div className="truncate px-4">Now Playing: {currentSong.judul}</div>
+                <div className="flex items-center justify-center gap-2 md:gap-4 mt-2 text-[10px] md:text-xs flex-wrap">
                   {isShuffled && (
                     <span className="text-blue-400 flex items-center gap-1">
-                      <Shuffle size={12} /> Shuffle Aktif
+                      <Shuffle size={10} className="md:w-3 md:h-3" /> Shuffle
                     </span>
                   )}
                   {repeatMode !== 'off' && (
                     <span className="text-blue-400 flex items-center gap-1">
-                      <Repeat size={12} /> Repeat: {repeatMode === 'all' ? 'Semua' : 'Satu'}
+                      <Repeat size={10} className="md:w-3 md:h-3" /> {repeatMode === 'all' ? 'All' : 'One'}
                     </span>
                   )}
                   {queue.length > 0 && (
                     <span className="text-green-400 flex items-center gap-1">
-                      <List size={12} /> Queue: {queue.length}
+                      <List size={10} className="md:w-3 md:h-3" /> {queue.length}
                     </span>
                   )}
                 </div>
@@ -513,79 +579,104 @@ export default function MusicPage() {
         </div>
       </div>
 
-      {/* Queue Sidebar */}
+      {/* Queue Sidebar - Mobile: Bottom sheet, Desktop: Side panel */}
       {showQueue && (
-        <div className="w-80 bg-gray-800 p-4 overflow-y-auto border-l border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">📋 Antrian ({queue.length})</h2>
-            {queue.length > 0 && (
-              <button
-                onClick={clearQueue}
-                className="text-red-500 hover:text-red-400 text-sm"
-                title="Kosongkan antrian"
-              >
-                🗑️ Hapus Semua
-              </button>
+        <>
+          {/* Mobile overlay - Transparent to show background */}
+          <div 
+            className="md:hidden fixed inset-0 bg-black bg-opacity-30 z-40 backdrop-blur-sm"
+            onClick={() => setShowQueue(false)}
+          />
+          
+          <div className={`
+            fixed md:relative
+            bottom-0 md:bottom-auto right-0 md:right-auto
+            w-full md:w-80
+            max-h-[70vh] md:max-h-full md:h-full
+            bg-gray-800 p-4 overflow-y-auto overflow-x-hidden border-t md:border-t-0 md:border-l border-gray-700
+            rounded-t-2xl md:rounded-none
+            z-50
+            transition-transform duration-300
+          `}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg md:text-xl font-bold">📋 Antrian ({queue.length})</h2>
+              <div className="flex gap-2">
+                {queue.length > 0 && (
+                  <button
+                    onClick={clearQueue}
+                    className="text-red-500 hover:text-red-400 text-sm"
+                    title="Kosongkan antrian"
+                  >
+                    🗑️
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowQueue(false)}
+                  className="md:hidden text-gray-400 hover:text-white"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+            
+            {queue.length === 0 ? (
+              <div className="text-center text-gray-400 py-8">
+                <List size={48} className="mx-auto mb-4 opacity-50" />
+                <p className="text-sm">Antrian kosong</p>
+                <p className="text-xs mt-2">Tambahkan lagu dari playlist</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {queue.map((song, index) => (
+                  <div
+                    key={`${song.id}-${index}`}
+                    className={`p-3 rounded flex items-center gap-2 ${
+                      currentSong?.id === song.id ? 'bg-blue-900' : 'bg-gray-700'
+                    } hover:bg-gray-600`}
+                  >
+                    <div 
+                      className="flex-1 cursor-pointer min-w-0" 
+                      onClick={() => {
+                        setCurrentSong(song);
+                        setIsPlaying(true);
+                      }}
+                    >
+                      <div className="font-semibold text-sm truncate">{song.judul}</div>
+                      <div className="text-xs text-gray-400 truncate">{song.tahun}</div>
+                    </div>
+                    <div className="flex gap-1 md:gap-2 flex-shrink-0">
+                      {index > 0 && (
+                        <button
+                          onClick={() => moveQueueItem(index, index - 1)}
+                          className="text-gray-400 hover:text-white text-sm p-1"
+                          title="Pindah ke atas"
+                        >
+                          ⬆
+                        </button>
+                      )}
+                      {index < queue.length - 1 && (
+                        <button
+                          onClick={() => moveQueueItem(index, index + 1)}
+                          className="text-gray-400 hover:text-white text-sm p-1"
+                          title="Pindah ke bawah"
+                        >
+                          ⬇
+                        </button>
+                      )}
+                      <button
+                        onClick={() => removeFromQueue(index)}
+                        className="text-red-500 hover:text-red-400 text-lg p-1"
+                        title="Hapus dari antrian"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-          
-          {queue.length === 0 ? (
-            <div className="text-center text-gray-400 py-8">
-              <List size={48} className="mx-auto mb-4 opacity-50" />
-              <p className="text-sm">Antrian kosong</p>
-              <p className="text-xs mt-2">Tambahkan lagu dari playlist</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {queue.map((song, index) => (
-                <div
-                  key={`${song.id}-${index}`}
-                  className={`p-3 rounded flex justify-between items-center ${
-                    currentSong?.id === song.id ? 'bg-blue-900' : 'bg-gray-700'
-                  } hover:bg-gray-600`}
-                >
-                  <div 
-                    className="flex-1 cursor-pointer" 
-                    onClick={() => {
-                      setCurrentSong(song);
-                      setIsPlaying(true);
-                    }}
-                  >
-                    <div className="font-semibold text-sm">{song.judul}</div>
-                    <div className="text-xs text-gray-400">{song.tahun}</div>
-                  </div>
-                  <div className="flex gap-2 ml-2">
-                    {index > 0 && (
-                      <button
-                        onClick={() => moveQueueItem(index, index - 1)}
-                        className="text-gray-400 hover:text-white text-sm"
-                        title="Pindah ke atas"
-                      >
-                        ⬆
-                      </button>
-                    )}
-                    {index < queue.length - 1 && (
-                      <button
-                        onClick={() => moveQueueItem(index, index + 1)}
-                        className="text-gray-400 hover:text-white text-sm"
-                        title="Pindah ke bawah"
-                      >
-                        ⬇
-                      </button>
-                    )}
-                    <button
-                      onClick={() => removeFromQueue(index)}
-                      className="text-red-500 hover:text-red-400 text-lg"
-                      title="Hapus dari antrian"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        </>
       )}
 
       <style jsx>{`
