@@ -1,88 +1,137 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, List, ChevronLeft, ChevronRight, Music, Video, Search, X } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, List, ChevronLeft, ChevronRight, Music, Search, X, Volume2, Video } from 'lucide-react';
 
+// YouTube Player API Types
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady: () => void;
+  }
+}
+
+// Interface Song yang Disederhanakan
 interface Song {
   id: number;
   judul: string;
-  type?: string;
   link: string;
-  ss?: string;
   tahun: string;
-  images: string[];
   playlist: string[];
 }
+
+// Kunci Local Storage
+const QUEUE_STORAGE_KEY = 'musicPlayerQueue';
+
+// Fungsi untuk mendapatkan Origin URL saat ini (penting untuk PostMessage security)
+const getOriginUrl = (): string | undefined => {
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  return undefined;
+};
 
 export default function MusicPage() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [mode, setMode] = useState<'video' | 'audio'>('audio');
-  const [queue, setQueue] = useState<Song[]>([]);
+  const [userClosedSidebar, setUserClosedSidebar] = useState(false);
+  const [queue, setQueue] = useState<Song[]>([]); 
   const [isShuffled, setIsShuffled] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off');
   const [shuffledOrder, setShuffledOrder] = useState<Song[]>([]);
   const [selectedPlaylist, setSelectedPlaylist] = useState<string>('all');
   const [showQueue, setShowQueue] = useState(false);
   const [notification, setNotification] = useState<string>('');
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [volume, setVolume] = useState(50);
+  const [mode, setMode] = useState<'audio' | 'video'>('audio');
   
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlayerReady, setIsPlayerReady] = useState(false); 
+  
+  const playerRef = useRef<any>(null);
 
-  // Load queue from localStorage on mount
+  // --- FUNGSI UTILITY LOCAL STORAGE ---
+  const saveQueueToLocalStorage = (newQueue: Song[]) => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(newQueue));
+      } catch (error) {
+        console.error('Error saving queue to local storage:', error);
+      }
+    }
+  };
+
+  const loadQueueFromLocalStorage = (): Song[] => {
+    if (typeof window !== 'undefined') {
+      try {
+        const storedQueue = localStorage.getItem(QUEUE_STORAGE_KEY);
+        return storedQueue ? JSON.parse(storedQueue) : [];
+      } catch (error) {
+        console.error('Error loading queue from local storage:', error);
+        return [];
+      }
+    }
+    return [];
+  };
+
+  // Mount, Load Queue, dan fetch songs
   useEffect(() => {
-    const savedQueue = localStorage.getItem('stopify_queue');
-    const savedCurrentSong = localStorage.getItem('stopify_current_song');
+    if (typeof window !== 'undefined') {
+        const initialQueue = loadQueueFromLocalStorage();
+        setQueue(initialQueue);
+        
+        // 2. Load YouTube IFrame API
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        if (firstScriptTag && firstScriptTag.parentNode) {
+          firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
+
+        window.onYouTubeIframeAPIReady = () => {
+          console.log('YouTube API Ready');
+        };
+
+        fetchSongs(initialQueue); 
+    }
     
-    if (savedQueue) {
-      try {
-        const parsedQueue = JSON.parse(savedQueue);
-        setQueue(parsedQueue);
-      } catch (error) {
-        console.error('Error loading queue:', error);
-      }
-    }
-
-    if (savedCurrentSong) {
-      try {
-        const parsedSong = JSON.parse(savedCurrentSong);
-        setCurrentSong(parsedSong);
-      } catch (error) {
-        console.error('Error loading current song:', error);
-      }
-    }
-
-    fetchSongs();
+    setMounted(true);
   }, []);
 
-  // Save queue to localStorage whenever it changes
+  // Simpan queue ke Local Storage setiap kali queue berubah
   useEffect(() => {
-    if (queue.length > 0) {
-      localStorage.setItem('stopify_queue', JSON.stringify(queue));
-    } else {
-      localStorage.removeItem('stopify_queue');
-    }
+    saveQueueToLocalStorage(queue);
   }, [queue]);
 
-  // Save current song to localStorage
-  useEffect(() => {
-    if (currentSong) {
-      localStorage.setItem('stopify_current_song', JSON.stringify(currentSong));
-    }
-  }, [currentSong]);
 
-  const fetchSongs = async () => {
+  // Auto-open sidebar on desktop
+  useEffect(() => {
+    if (!mounted || userClosedSidebar || typeof window === 'undefined') return; 
+    
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsSidebarOpen(true);
+      }
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [mounted, userClosedSidebar]);
+
+  const fetchSongs = async (initialQueue: Song[]) => {
     try {
       const response = await fetch('/api/music');
-      const data = await response.json();
+      const data: Song[] = await response.json();
       setSongs(data);
       
-      if (!currentSong && data.length > 0) {
+      if (initialQueue.length > 0) {
+        const songInList = data.find(s => s.id === initialQueue[0].id);
+        setCurrentSong(songInList || data[0] || null);
+      } else if (!currentSong && data.length > 0) {
         setCurrentSong(data[0]);
       }
     } catch (error) {
@@ -90,21 +139,132 @@ export default function MusicPage() {
     }
   };
 
-  // Convert Google Drive link to direct download link
-  const getDirectAudioUrl = (url: string) => {
-    if (!url) return '';
-    
-    // Check if it's a Google Drive link
-    if (url.includes('drive.google.com')) {
-      const fileIdMatch = url.match(/\/d\/([^/]+)/);
-      if (fileIdMatch) {
-        const fileId = fileIdMatch[1];
-        return `https://drive.google.com/uc?export=download&id=${fileId}`;
+  // Initialize YouTube Player when song changes
+  useEffect(() => {
+    if (!currentSong || !mounted || typeof window === 'undefined') return;
+
+    setIsPlayerReady(false);
+
+    const videoId = getYoutubeVideoId(currentSong.link);
+    if (!videoId) return;
+
+    // Destroy existing player
+    if (playerRef.current) {
+      try {
+        if (typeof playerRef.current.destroy === 'function') {
+           playerRef.current.destroy();
+        }
+        playerRef.current = null;
+      } catch (e) {
+        // Ignore error
       }
     }
-    
-    // Return as is for regular URLs
-    return url;
+
+    if (window.YT && window.YT.Player) {
+      const targetElement = 'youtube-player'; 
+      const playerOrigin = getOriginUrl();
+
+      playerRef.current = new window.YT.Player(targetElement, {
+        height: mode === 'video' ? '100%' : '0',
+        width: mode === 'video' ? '100%' : '0',
+        videoId: videoId,
+        playerVars: {
+          autoplay: 0, 
+          controls: mode === 'video' ? 1 : 0,
+          disablekb: mode === 'audio' ? 1 : 0,
+          fs: mode === 'video' ? 1 : 0,
+          modestbranding: 1,
+          playsinline: 1,
+          rel: 0,
+          // Mengatasi PostMessage Mismatch (Error origin)
+          origin: playerOrigin 
+        },
+        events: {
+          onReady: (event: any) => {
+            setIsPlayerReady(true); 
+            
+            event.target.setVolume(volume);
+            if (isPlaying) {
+              event.target.playVideo();
+            }
+          },
+          onError: (event: any) => {
+            if (event.data === -2) {
+              console.warn("YouTube Service Unstable (Error -2).");
+              showNotification("⚠️ Layanan YouTube tidak stabil. Coba lagi dalam beberapa saat.");
+            } else {
+              console.error(`Youtubeer Error: ${event.data}`, currentSong);
+              showNotification(`❌ Error Player YouTube: ${event.data}`);
+            }
+            setIsPlaying(false);
+          },
+          onStateChange: (event: any) => {
+            if (event.data === 0) {
+              handleVideoEnded();
+            } else if (event.data === 1) {
+              setIsPlaying(true);
+            } else if (event.data === 2) {
+              setIsPlaying(false);
+            }
+          },
+        },
+      });
+    }
+
+    return () => {
+      if (playerRef.current) {
+        try {
+          if (typeof playerRef.current.destroy === 'function') {
+            playerRef.current.destroy(); 
+          }
+          playerRef.current = null;
+        } catch (e) {
+          // Ignore
+        }
+      }
+    };
+  }, [currentSong, mounted, mode, isPlaying, volume]); // isPlaying dan volume ditambahkan untuk memastikan player bereaksi cepat saat inisialisasi
+
+  // Handle play/pause
+  useEffect(() => {
+    if (!playerRef.current || !isPlayerReady) return; 
+
+    try {
+      if (isPlaying) {
+        if (typeof playerRef.current.playVideo === 'function') {
+           playerRef.current.playVideo();
+        }
+      } else {
+        if (typeof playerRef.current.pauseVideo === 'function') {
+          playerRef.current.pauseVideo();
+        }
+      }
+    } catch (e) {
+      console.error('Player control error:', e);
+    }
+  }, [isPlaying, isPlayerReady]);
+
+  // Handle volume change
+  useEffect(() => {
+    if (playerRef.current && isPlayerReady && typeof playerRef.current.setVolume === 'function') {
+      playerRef.current.setVolume(volume);
+    }
+  }, [volume, isPlayerReady]);
+
+  const getYoutubeVideoId = (url: string) => {
+    const match = url.match(/[?&]v=([^&]+)/);
+    return match ? match[1] : null;
+  };
+
+  const handleVideoEnded = () => {
+    if (repeatMode === 'one') {
+      playerRef.current?.seekTo(0);
+      playerRef.current?.playVideo();
+    } else if (repeatMode === 'all' || queue.length > 0) {
+      playNext();
+    } else {
+      setIsPlaying(false);
+    }
   };
 
   const filteredSongs = songs.filter(song => {
@@ -124,30 +284,38 @@ export default function MusicPage() {
   };
 
   const togglePlay = () => {
-    if (mode === 'audio' && audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
+    setIsPlaying(!isPlaying);
   };
 
   const playNext = () => {
     if (!currentSong) return;
     
+    if (queue.length > 0) {
+      const currentIndex = queue.findIndex(s => s.id === currentSong.id);
+      
+      if (currentIndex !== -1) {
+        const nextIndex = (currentIndex + 1) % queue.length;
+        setCurrentSong(queue[nextIndex]);
+        setIsPlaying(true);
+        return; 
+      } 
+    }
+
     let playQueue: Song[];
     if (isShuffled && shuffledOrder.length > 0) {
       playQueue = shuffledOrder;
-    } else if (queue.length > 0) {
-      playQueue = queue;
     } else {
-      playQueue = songs;
+      playQueue = filteredSongs;
     }
     
     const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
     const nextIndex = (currentIndex + 1) % playQueue.length;
+
+    if (playQueue.length === 0) {
+        setIsPlaying(false);
+        return;
+    }
+    
     setCurrentSong(playQueue[nextIndex]);
     setIsPlaying(true);
   };
@@ -158,10 +326,13 @@ export default function MusicPage() {
     let playQueue: Song[];
     if (isShuffled && shuffledOrder.length > 0) {
       playQueue = shuffledOrder;
-    } else if (queue.length > 0) {
-      playQueue = queue;
     } else {
-      playQueue = songs;
+      playQueue = filteredSongs;
+    }
+
+    if (playQueue.length === 0) {
+        setIsPlaying(false);
+        return;
     }
     
     const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
@@ -173,9 +344,14 @@ export default function MusicPage() {
   const toggleShuffle = () => {
     if (!isShuffled) {
       setRepeatMode('off');
-      const playQueue = queue.length > 0 ? queue : songs;
-      const shuffled = [...playQueue].sort(() => Math.random() - 0.5);
-      setShuffledOrder(shuffled);
+      const playQueue = queue.length > 0 ? queue : filteredSongs;
+      
+      let songsToShuffle = [...playQueue.filter(s => s.id !== currentSong?.id)];
+      const shuffled = songsToShuffle.sort(() => Math.random() - 0.5);
+
+      const finalShuffledOrder = currentSong ? [currentSong, ...shuffled] : shuffled;
+
+      setShuffledOrder(finalShuffledOrder);
       setIsShuffled(true);
       showNotification('🔀 Shuffle diaktifkan');
     } else {
@@ -206,93 +382,76 @@ export default function MusicPage() {
   };
 
   const addToQueue = (song: Song) => {
-    setQueue([...queue, song]);
+    setQueue(prevQueue => {
+      const newQueue = [...prevQueue, song];
+      return newQueue; 
+    });
     showNotification(`✅ "${song.judul}" ditambahkan ke antrian`);
   };
 
   const removeFromQueue = (index: number) => {
-    const removedSong = queue[index];
-    const newQueue = queue.filter((_, i) => i !== index);
-    setQueue(newQueue);
-    showNotification(`❌ "${removedSong.judul}" dihapus dari antrian`);
+    setQueue(prevQueue => {
+      const removedSong = prevQueue[index];
+      const newQueue = prevQueue.filter((_, i) => i !== index);
+      showNotification(`❌ "${removedSong.judul}" dihapus dari antrian`);
+      return newQueue; 
+    });
   };
 
   const clearQueue = () => {
     if (confirm('Hapus semua lagu dari antrian?')) {
       setQueue([]);
-      localStorage.removeItem('stopify_queue');
       showNotification('🗑️ Antrian dikosongkan');
     }
   };
 
   const moveQueueItem = (fromIndex: number, toIndex: number) => {
-    const newQueue = [...queue];
-    const [movedItem] = newQueue.splice(fromIndex, 1);
-    newQueue.splice(toIndex, 0, movedItem);
-    setQueue(newQueue);
+    setQueue(prevQueue => {
+      const newQueue = [...prevQueue];
+      const [movedItem] = newQueue.splice(fromIndex, 1);
+      newQueue.splice(toIndex, 0, movedItem);
+      return newQueue;
+    });
   };
 
-  const getYoutubeEmbedUrl = (url: string) => {
-    const videoId = url.split('v=')[1]?.split('&')[0];
-    return `https://www.youtube.com/embed/${videoId}?autoplay=${isPlaying ? 1 : 0}`;
+  const handleSidebarToggle = () => {
+    const newState = !isSidebarOpen;
+    setIsSidebarOpen(newState);
+    setUserClosedSidebar(!newState);
   };
 
-  useEffect(() => {
-    if (mode === 'audio' && audioRef.current && currentSong) {
-      audioRef.current.load();
-      if (isPlaying) {
-        audioRef.current.play();
-      }
-    }
-  }, [currentSong, mode]);
-
-  const handleAudioEnded = () => {
-    if (repeatMode === 'one') {
-      audioRef.current?.play();
-    } else if (repeatMode === 'all' || queue.length > 1) {
-      playNext();
-    } else {
-      setIsPlaying(false);
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-    }
-  };
-
-  const handleLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-    }
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = parseFloat(e.target.value);
-    if (audioRef.current) {
-      audioRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    if (isNaN(seconds)) return '0:00';
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  if (!mounted) {
+    return (
+      <div 
+        className="flex flex-col md:flex-row h-screen bg-gray-900 text-white relative items-center justify-center"
+        suppressHydrationWarning={true}
+      >
+        <p>Loading Music Player...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white relative">
+    // suppressHydrationWarning pada elemen root adalah solusi standar untuk mengatasi error ekstensi browser.
+    <div 
+        className="flex flex-col md:flex-row h-screen bg-gray-900 text-white relative"
+        suppressHydrationWarning={true}
+    >
       {/* Notification Toast */}
       {notification && (
-        <div className="fixed top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-in">
-          {notification}
+        <div 
+          className="fixed bg-black bg-opacity-70 backdrop-blur-md text-white px-8 py-4 rounded-2xl shadow-2xl z-50 animate-fade-in-out"
+          style={{
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)'
+          }}
+        >
+          <p className="text-center text-lg font-medium">{notification}</p>
         </div>
       )}
 
-      {/* Sidebar - Mobile: Full screen overlay, Desktop: Side panel */}
+      {/* Sidebar */}
       <div className={`
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         md:translate-x-0
@@ -301,15 +460,17 @@ export default function MusicPage() {
         transition-all duration-300 bg-gray-800 overflow-hidden z-40
       `}>
         <div className="p-4 h-full overflow-y-auto">
-          {/* Mobile close button */}
           <button
-            onClick={() => setIsSidebarOpen(false)}
+            onClick={() => {
+              setIsSidebarOpen(false);
+              setUserClosedSidebar(true);
+            }}
             className="md:hidden absolute top-4 right-4 p-2 hover:bg-gray-700 rounded"
           >
             <X size={24} />
           </button>
 
-          <h2 className="text-xl font-bold mb-4">🎵 Playlist</h2>
+          <h2 className="text-xl font-bold mb-4">🎵 Music Playlist</h2>
           
           {/* Search Bar */}
           <div className="mb-4">
@@ -369,7 +530,10 @@ export default function MusicPage() {
                     onClick={() => {
                       setCurrentSong(song);
                       setIsPlaying(true);
-                      setIsSidebarOpen(false); // Close sidebar on mobile after selecting
+                      if (window.innerWidth < 768) {
+                        setIsSidebarOpen(false);
+                        setUserClosedSidebar(true);
+                      }
                     }}
                     className="flex-1 cursor-pointer"
                   >
@@ -392,11 +556,14 @@ export default function MusicPage() {
         </div>
       </div>
 
-      {/* Overlay for mobile when sidebar is open */}
+      {/* Overlay for mobile */}
       {isSidebarOpen && (
         <div 
           className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
-          onClick={() => setIsSidebarOpen(false)}
+          onClick={() => {
+            setIsSidebarOpen(false);
+            setUserClosedSidebar(true);
+          }}
         />
       )}
 
@@ -405,16 +572,19 @@ export default function MusicPage() {
         {/* Header */}
         <div className="bg-gray-800 p-3 md:p-4 flex items-center justify-between">
           <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            onClick={handleSidebarToggle}
             className="p-2 hover:bg-gray-700 rounded"
           >
             {isSidebarOpen ? <ChevronLeft size={20} className="md:w-6 md:h-6" /> : <ChevronRight size={20} className="md:w-6 md:h-6" />}
           </button>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <button
-              onClick={() => setMode('audio')}
-              className={`px-2 md:px-4 py-2 rounded flex items-center gap-1 md:gap-2 text-sm ${
+              onClick={() => {
+                setMode('audio');
+                showNotification('🎵 Mode Audio');
+              }}
+              className={`px-2 md:px-4 py-2 rounded flex items-center gap-1 md:gap-2 text-sm transition-colors ${
                 mode === 'audio' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'
               }`}
             >
@@ -422,8 +592,11 @@ export default function MusicPage() {
               <span className="hidden md:inline">Audio</span>
             </button>
             <button
-              onClick={() => setMode('video')}
-              className={`px-2 md:px-4 py-2 rounded flex items-center gap-1 md:gap-2 text-sm ${
+              onClick={() => {
+                setMode('video');
+                showNotification('🎬 Mode Video');
+              }}
+              className={`px-2 md:px-4 py-2 rounded flex items-center gap-1 md:gap-2 text-sm transition-colors ${
                 mode === 'video' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'
               }`}
             >
@@ -446,34 +619,60 @@ export default function MusicPage() {
         </div>
 
         {/* Player Area */}
-        <div className="flex-1 flex items-center justify-center bg-black p-4 md:p-8 overflow-hidden">
-          {currentSong && (
-            <div className="w-full max-w-4xl">
-              {mode === 'video' ? (
-                <div className="aspect-video">
-                  <iframe
-                    src={getYoutubeEmbedUrl(currentSong.link)}
-                    className="w-full h-full rounded-lg"
-                    allow="autoplay; encrypted-media"
-                    allowFullScreen
-                  />
+        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-4 md:p-8 overflow-hidden">
+          {currentSong ? (
+            mode === 'video' ? (
+              <div className="w-full max-w-4xl">
+                <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                  <div 
+                    id="youtube-player" 
+                    style={{ 
+                      width: '100%', 
+                      height: '100%',
+                      position: 'relative'
+                    }}
+                  ></div>
                 </div>
-              ) : (
-                <div className="text-center">
-                  <div className="w-48 h-48 md:w-64 md:h-64 mx-auto bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center mb-6 md:mb-8 shadow-2xl">
-                    <Music size={80} className="md:w-[120px] md:h-[120px]" />
-                  </div>
-                  <h1 className="text-xl md:text-3xl font-bold mb-2 px-4">{currentSong.judul}</h1>
-                  <p className="text-gray-400 text-sm md:text-lg">{currentSong.tahun}</p>
-                  <audio
-                    ref={audioRef}
-                    src={getDirectAudioUrl(currentSong.images[0])}
-                    onEnded={handleAudioEnded}
-                    onTimeUpdate={handleTimeUpdate}
-                    onLoadedMetadata={handleLoadedMetadata}
-                  />
+                <div className="mt-4 text-center">
+                  <h2 className="text-xl md:text-2xl font-bold">{currentSong.judul}</h2>
+                  <p className="text-gray-400 text-sm md:text-base">{currentSong.tahun}</p>
                 </div>
-              )}
+              </div>
+            ) : (
+              <div className="text-center max-w-md w-full">
+                {/* Hidden YouTube Player for Audio Mode */}
+                <div style={{ position: 'absolute', left: '-9999px', width: '0', height: '0' }}>
+                  <div id="youtube-player"></div>
+                </div>
+                
+                <div className="w-48 h-48 md:w-64 md:h-64 mx-auto bg-gradient-to-br from-purple-600 via-pink-500 to-blue-600 rounded-full flex items-center justify-center mb-6 md:mb-8 shadow-2xl animate-pulse-slow">
+                  <Music size={80} className="md:w-[120px] md:h-[120px] text-white" />
+                </div>
+                <h1 className="text-xl md:text-3xl font-bold mb-2 px-4">{currentSong.judul}</h1>
+                <p className="text-gray-400 text-sm md:text-lg mb-6">{currentSong.tahun}</p>
+                
+                {/* Volume Control */}
+                <div className="flex items-center gap-3 justify-center px-4">
+                  <Volume2 size={20} className="text-gray-400" />
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={volume}
+                    onChange={(e) => setVolume(parseInt(e.target.value))}
+                    className="w-32 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${volume}%, #374151 ${volume}%, #374151 100%)`
+                    }}
+                  />
+                  <span className="text-sm text-gray-400 w-8">{volume}%</span>
+                </div>
+              </div>
+            )
+          ) : (
+            <div className="text-center text-gray-400">
+              <Music size={80} className="mx-auto mb-4 opacity-50" />
+              <p>Pilih lagu dari playlist</p>
             </div>
           )}
         </div>
@@ -481,31 +680,10 @@ export default function MusicPage() {
         {/* Controls */}
         <div className="bg-gray-800 p-4 md:p-6">
           <div className="max-w-4xl mx-auto">
-            {/* Progress Bar - Only show in audio mode */}
-            {mode === 'audio' && currentSong && (
-              <div className="mb-4 md:mb-6">
-                <input
-                  type="range"
-                  min="0"
-                  max={duration || 0}
-                  value={currentTime}
-                  onChange={handleSeek}
-                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-                  style={{
-                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(currentTime / duration) * 100}%, #374151 ${(currentTime / duration) * 100}%, #374151 100%)`
-                  }}
-                />
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
-                  <span>{formatTime(currentTime)}</span>
-                  <span>{formatTime(duration)}</span>
-                </div>
-              </div>
-            )}
-
             <div className="flex items-center justify-center gap-3 md:gap-6 mb-3 md:mb-4">
               <button
                 onClick={toggleShuffle}
-                className={`p-2 rounded hover:bg-gray-700 ${
+                className={`p-2 rounded hover:bg-gray-700 transition-colors ${
                   isShuffled ? 'text-blue-500' : ''
                 }`}
                 title={isShuffled ? 'Shuffle: Aktif' : 'Shuffle: Nonaktif'}
@@ -515,7 +693,7 @@ export default function MusicPage() {
               
               <button
                 onClick={playPrevious}
-                className="p-2 rounded hover:bg-gray-700"
+                className="p-2 rounded hover:bg-gray-700 transition-colors"
                 title="Previous"
               >
                 <SkipBack size={24} className="md:w-7 md:h-7" />
@@ -523,7 +701,7 @@ export default function MusicPage() {
               
               <button
                 onClick={togglePlay}
-                className="p-3 md:p-4 bg-blue-600 rounded-full hover:bg-blue-700"
+                className="p-3 md:p-4 bg-blue-600 rounded-full hover:bg-blue-700 transition-all transform hover:scale-105"
                 title={isPlaying ? 'Pause' : 'Play'}
               >
                 {isPlaying ? <Pause size={28} className="md:w-8 md:h-8" /> : <Play size={28} className="md:w-8 md:h-8" />}
@@ -531,7 +709,7 @@ export default function MusicPage() {
               
               <button
                 onClick={playNext}
-                className="p-2 rounded hover:bg-gray-700"
+                className="p-2 rounded hover:bg-gray-700 transition-colors"
                 title="Next"
               >
                 <SkipForward size={24} className="md:w-7 md:h-7" />
@@ -539,7 +717,7 @@ export default function MusicPage() {
               
               <button
                 onClick={toggleRepeat}
-                className={`p-2 rounded hover:bg-gray-700 relative ${
+                className={`p-2 rounded hover:bg-gray-700 relative transition-colors ${
                   repeatMode !== 'off' ? 'text-blue-500' : ''
                 }`}
                 title={`Repeat: ${repeatMode === 'off' ? 'Nonaktif' : repeatMode === 'all' ? 'Semua' : 'Satu'}`}
@@ -579,25 +757,15 @@ export default function MusicPage() {
         </div>
       </div>
 
-      {/* Queue Sidebar - Mobile: Bottom sheet, Desktop: Side panel */}
+      {/* Queue Sidebar */}
       {showQueue && (
         <>
-          {/* Mobile overlay - Transparent to show background */}
           <div 
             className="md:hidden fixed inset-0 bg-black bg-opacity-30 z-40 backdrop-blur-sm"
             onClick={() => setShowQueue(false)}
           />
           
-          <div className={`
-            fixed md:relative
-            bottom-0 md:bottom-auto right-0 md:right-auto
-            w-full md:w-80
-            max-h-[70vh] md:max-h-full md:h-full
-            bg-gray-800 p-4 overflow-y-auto overflow-x-hidden border-t md:border-t-0 md:border-l border-gray-700
-            rounded-t-2xl md:rounded-none
-            z-50
-            transition-transform duration-300
-          `}>
+          <div className="fixed md:relative bottom-0 md:bottom-auto right-0 md:right-auto w-full md:w-80 max-h-[70vh] md:max-h-full md:h-full bg-gray-800 p-4 overflow-y-auto overflow-x-hidden border-t md:border-t-0 md:border-l border-gray-700 rounded-t-2xl md:rounded-none z-50 transition-transform duration-300">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg md:text-xl font-bold">📋 Antrian ({queue.length})</h2>
               <div className="flex gap-2">
@@ -632,7 +800,7 @@ export default function MusicPage() {
                     key={`${song.id}-${index}`}
                     className={`p-3 rounded flex items-center gap-2 ${
                       currentSong?.id === song.id ? 'bg-blue-900' : 'bg-gray-700'
-                    } hover:bg-gray-600`}
+                    } hover:bg-gray-600 transition-colors`}
                   >
                     <div 
                       className="flex-1 cursor-pointer min-w-0" 
@@ -680,23 +848,45 @@ export default function MusicPage() {
       )}
 
       <style jsx>{`
-        @keyframes slide-in {
-          from {
-            transform: translateX(100%);
+        @keyframes fade-in-out {
+          0% {
             opacity: 0;
+            transform: scale(0.9);
           }
-          to {
-            transform: translateX(0);
+          10% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          90% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+        }
+
+        @keyframes pulse-slow {
+          0%, 100% {
+            transform: scale(1);
             opacity: 1;
           }
+          50% {
+            transform: scale(1.05);
+            opacity: 0.9;
+          }
         }
 
-        .animate-slide-in {
-          animation: slide-in 0.3s ease-out;
+        .animate-fade-in-out {
+          animation: fade-in-out 3s ease-in-out;
         }
 
-        /* Custom slider styles */
-        .slider::-webkit-slider-thumb {
+        .animate-pulse-slow {
+          animation: pulse-slow 3s ease-in-out infinite;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
           appearance: none;
           width: 16px;
           height: 16px;
@@ -706,12 +896,12 @@ export default function MusicPage() {
           box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
-        .slider::-webkit-slider-thumb:hover {
+        input[type="range"]::-webkit-slider-thumb:hover {
           background: #2563eb;
           transform: scale(1.2);
         }
 
-        .slider::-moz-range-thumb {
+        input[type="range"]::-moz-range-thumb {
           width: 16px;
           height: 16px;
           background: #3b82f6;
@@ -721,7 +911,7 @@ export default function MusicPage() {
           box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
-        .slider::-moz-range-thumb:hover {
+        input[type="range"]::-moz-range-thumb:hover {
           background: #2563eb;
           transform: scale(1.2);
         }

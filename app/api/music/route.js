@@ -35,7 +35,10 @@ export async function GET() {
             link: "https://www.youtube.com/watch?v=YefncL4TagU",
             images: [
                 // "/music/1.mp3",
-                "https://drive.google.com/file/d/1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa/view?usp=drive_link",
+                // "https://drive.google.com/file/d/1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa/view?usp=drive_link",
+                // "https://drive.google.com/file/d/1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa/view?usp=sharing",
+                // "https://drive.google.com/uc?export=download&id=1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa",
+                "https://drive.google.com/file/d/1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa/view",
             ],
             tahun: "August 2023",
             playlist : [

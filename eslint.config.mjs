@@ -13,6 +13,14 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Tambahkan rules custom
+  {
+    rules: {
+      "react/no-unknown-property": ["error", { 
+        ignore: ["suppressHydrationWarning"] 
+      }]
+    }
+  }
 ]);
 
 export default eslintConfig;
