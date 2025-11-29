@@ -19,10 +19,10 @@ export async function GET() {
             judul: "358. Where Have You Been, Rihanna",
             //type: "NATI",
             link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            images: [
-                // "/music/358.mp3",
-                "https://drive.google.com/file/d/15WiaejmDrp1Ojmyy5lX9p3GyTG9guy3K/view?usp=drive_link",
-            ],
+            // images: [
+            //     // "/music/358.mp3",
+            //     "https://drive.google.com/file/d/15WiaejmDrp1Ojmyy5lX9p3GyTG9guy3K/view?usp=drive_link",
+            // ],
             tahun: "August 2023",
             playlist : [
                 "MYLK",
@@ -33,13 +33,13 @@ export async function GET() {
             id: 1,
             judul: "1. Death Bed, powfu, beabadoobee",
             link: "https://www.youtube.com/watch?v=YefncL4TagU",
-            images: [
-                // "/music/1.mp3",
-                // "https://drive.google.com/file/d/1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa/view?usp=drive_link",
-                // "https://drive.google.com/file/d/1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa/view?usp=sharing",
-                // "https://drive.google.com/uc?export=download&id=1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa",
-                "https://drive.google.com/file/d/1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa/view",
-            ],
+            // images: [
+            //     // "/music/1.mp3",
+            //     // "https://drive.google.com/file/d/1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa/view?usp=drive_link",
+            //     // "https://drive.google.com/file/d/1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa/view?usp=sharing",
+            //     // "https://drive.google.com/uc?export=download&id=1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa",
+            //     "https://drive.google.com/file/d/1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa/view",
+            // ],
             tahun: "August 2023",
             playlist : [
                 "MYLK",
@@ -47,11 +47,11 @@ export async function GET() {
         },
         {
             id: 2,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            images: [
-                // "/music/358.mp3",
-            ],
+            judul: "2. Make You Mine, PUBLIC",
+            link: "https://www.youtube.com/watch?v=kExE86VPJS0",
+            // images: [
+            //     // "/music/358.mp3",
+            // ],
             tahun: "August 2023",
             playlist : [
                 "MYLK",
@@ -61,9 +61,176 @@ export async function GET() {
             id: 3,
             judul: "358. Where Have You Been, Rihanna",
             link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            images: [
-                // "/music/358.mp3",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
             ],
+        },
+        {
+            id: 4,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 5,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 6,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 7,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 8,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 9,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 10,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 11,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 12,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 13,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 14,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 15,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 16,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 17,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 18,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 19,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
+            tahun: "August 2023",
+            playlist : [
+                "MYLK",
+                "SED",
+            ],
+        },
+        {
+            id: 20,
+            judul: "358. Where Have You Been, Rihanna",
+            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
             tahun: "August 2023",
             playlist : [
                 "MYLK",
