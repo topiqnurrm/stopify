@@ -1,19 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, List, ChevronLeft, ChevronRight, Music, Search, X, Volume2, Video, ChevronUp, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, List, ChevronLeft, ChevronRight, Music, Search, X, Volume2, Video, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
 
 // =========================================================
 // KOREKSI TYPEDEFS DENGAN DECLARATION MERGING
 // =========================================================
 declare global {
-  // Biarkan TypeScript menggunakan definisi bawaan untuk WakeLockSentinel dan Navigator.wakeLock
-  // Hanya tambahkan ekstensi untuk Window (YouTube API)
-
-  // NOTE: Jika WakeLockSentinel tidak ditemukan setelah ini, Anda bisa mengimpor
-  // atau mendeklarasikannya di tempat lain, TAPI BUKAN di Navigator.
-
-  // Definisi YouTube Player API Types (Wajib)
   interface Window {
     YT: any;
     onYouTubeIframeAPIReady: () => void;
@@ -21,22 +14,21 @@ declare global {
     clearInterval: (handle: number | undefined) => void;
   }
 }
-// =========================================================
 
-// Interface Song - DITAMBAH properti 'added'
+// Interface Song
 interface Song {
   id: number;
   judul: string;
   link: string;
   tahun: string;
   playlist: string[];
-  added: string; // <-- PROPERTI BARU
+  added: string;
+  negara?: string; // Tambahan field negara
 }
 
-const QUEUE_STORAGE_KEY = 'musicPlayerQueue';
+type SortCriteria = 'default' | 'judul-asc' | 'judul-desc' | 'tahun-asc' | 'tahun-desc' | 'added-asc' | 'added-desc';
 
-// ... sisa kode lainnya (tidak perlu diubah) ...
-// 
+const QUEUE_STORAGE_KEY = 'musicPlayerQueue';
 
 const getOriginUrl = (): string | undefined => {
   if (typeof window !== 'undefined') {
@@ -52,6 +44,37 @@ const formatTime = (time: number): string => {
   return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
 
+// Helper function untuk parse tanggal Indonesia (DD Bulan YYYY)
+const parseIndonesianDate = (dateStr: string): Date => {
+  const monthMap: { [key: string]: number } = {
+    'Januari': 0, 'Februari': 1, 'Maret': 2, 'April': 3,
+    'Mei': 4, 'Juni': 5, 'Juli': 6, 'Agustus': 7,
+    'September': 8, 'Oktober': 9, 'November': 10, 'Desember': 11
+  };
+  
+  const parts = dateStr.trim().split(' ');
+  if (parts.length !== 3) {
+    console.warn('Invalid date format:', dateStr);
+    return new Date(0);
+  }
+  
+  const day = parseInt(parts[0], 10);
+  const monthName = parts[1];
+  const month = monthMap[monthName];
+  const year = parseInt(parts[2], 10);
+  
+  if (isNaN(day) || month === undefined || isNaN(year)) {
+    console.warn('Invalid date components:', { day, month: monthName, year });
+    return new Date(0);
+  }
+  
+  const result = new Date(year, month, day);
+  // Debug: hapus setelah fix
+  // console.log(`Parsed: "${dateStr}" → ${result.toISOString()}`);
+  
+  return result;
+};
+
 export default function MusicPage() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
@@ -62,7 +85,17 @@ export default function MusicPage() {
   const [isShuffled, setIsShuffled] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off');
   const [shuffledOrder, setShuffledOrder] = useState<Song[]>([]);
-  const [selectedPlaylist, setSelectedPlaylist] = useState<string>('all');
+  const [selectedPlaylists, setSelectedPlaylists] = useState<{
+    nada: string | null;
+    mood: string | null;
+    jenis: string | null;
+    likedBy: string | null;
+  }>({
+    nada: null,
+    mood: null,
+    jenis: null,
+    likedBy: null
+  });
   const [showQueue, setShowQueue] = useState(false);
   const [notification, setNotification] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,19 +112,21 @@ export default function MusicPage() {
 
   const [isCurrentlyPlayingFromQueue, setIsCurrentlyPlayingFromQueue] = useState(false);
   
-  // STATE BARU UNTUK WAKE LOCK
+  // STATE UNTUK WAKE LOCK
   const [wakeLock, setWakeLock] = useState<WakeLockSentinel | null>(null);
+
+  // STATE UNTUK SORTING
+  const [sortCriteria, setSortCriteria] = useState<SortCriteria>('default');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
 
   // --- WAKE LOCK LOGIC ---
   const requestWakeLock = async () => {
-      // Hanya request Wake Lock jika sedang bermain video atau musik dan belum ada lock
       if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && !wakeLock) {
           try {
               const sentinel = await navigator.wakeLock.request('screen');
               setWakeLock(sentinel);
               console.log('Wake Lock berhasil diaktifkan.');
               
-              // Lepaskan lock jika tab dilepas
               sentinel.addEventListener('release', () => {
                   console.log('Wake Lock telah dilepaskan oleh browser.');
                   setWakeLock(null);
@@ -110,7 +145,6 @@ export default function MusicPage() {
       }
   };
 
-  // Effect untuk mengelola Wake Lock
   useEffect(() => {
       if (isPlaying) {
           requestWakeLock();
@@ -173,7 +207,6 @@ export default function MusicPage() {
   useEffect(() => {
     if (!mounted || typeof window === 'undefined') return; 
     const handleResize = () => {
-      // Desktop: Paksa sidebar terbuka (kecuali user pernah menutupnya secara eksplisit)
       if (window.innerWidth >= 768) {
         if (!userClosedSidebar) {
            setIsSidebarOpen(true);
@@ -187,18 +220,30 @@ export default function MusicPage() {
 
   const fetchSongs = async (initialQueue: Song[]) => {
     try {
-      // NOTE: Endpoint '/api/music' harus menyediakan data dengan properti 'added'
       const response = await fetch('/api/music');
       const data: Song[] = await response.json();
-      setSongs(data);
+      
+      // Tambahkan field negara ke setiap song berdasarkan playlist
+      const songsWithCountry = data.map(song => {
+        const countryPlaylist = song.playlist.find(p => {
+          const num = parseInt(p);
+          return num >= 9 && num <= 203;
+        });
+        return {
+          ...song,
+          negara: countryPlaylist ? getPlaylistName(countryPlaylist) : undefined
+        };
+      });
+      
+      setSongs(songsWithCountry);
       if (initialQueue.length > 0) {
-        const songInList = data.find(s => s.id === initialQueue[0].id);
-        setCurrentSong(songInList || data[0] || null);
+        const songInList = songsWithCountry.find(s => s.id === initialQueue[0].id);
+        setCurrentSong(songInList || songsWithCountry[0] || null);
         if (songInList) {
             setIsCurrentlyPlayingFromQueue(true);
         }
-      } else if (!currentSong && data.length > 0) {
-        setCurrentSong(data[0]);
+      } else if (!currentSong && songsWithCountry.length > 0) {
+        setCurrentSong(songsWithCountry[0]);
         setIsCurrentlyPlayingFromQueue(false);
       }
     } catch (error) {
@@ -298,17 +343,13 @@ export default function MusicPage() {
     
   }, [currentSong, mounted]); 
 
-
-  // Effect terpisah untuk volume (Sinkronisasi Volume)
   useEffect(() => {
     if (playerRef.current && isPlayerReady && typeof playerRef.current.setVolume === 'function') {
       playerRef.current.setVolume(volume);
     }
   }, [volume, isPlayerReady]);
 
-  // Effect terpisah untuk Play/Pause (Mengatasi TypeError)
   useEffect(() => {
-    // Memastikan playVideo/pauseVideo adalah fungsi yang tersedia sebelum dipanggil
     if (!playerRef.current || !isPlayerReady || typeof playerRef.current.playVideo !== 'function') return; 
     
     try {
@@ -336,17 +377,349 @@ export default function MusicPage() {
     }
   };
 
-  const filteredSongs = songs.filter(song => {
-    const matchesPlaylist = selectedPlaylist === 'all' || song.playlist.includes(selectedPlaylist);
-    const matchesSearch = searchQuery === '' || 
-      song.judul.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      song.tahun.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      // Tambahkan pencarian berdasarkan properti 'added'
-      song.added.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesPlaylist && matchesSearch;
-  });
+  // --- FUNGSI SORTING ---
+  const sortSongs = (songsToSort: Song[], criteria: SortCriteria): Song[] => {
+    if (criteria === 'default') return songsToSort;
 
-  const playlists = ['all', 'MYLK', 'CB', 'SED', 'NATI'];
+    const sorted = [...songsToSort];
+    
+    switch (criteria) {
+      case 'judul-asc':
+        return sorted.sort((a, b) => a.judul.localeCompare(b.judul));
+      case 'judul-desc':
+        return sorted.sort((a, b) => b.judul.localeCompare(a.judul));
+      case 'tahun-asc':
+        return sorted.sort((a, b) => a.tahun.localeCompare(b.tahun));
+      case 'tahun-desc':
+        return sorted.sort((a, b) => b.tahun.localeCompare(a.tahun));
+      case 'added-asc':
+        return sorted.sort((a, b) => {
+          const dateA = parseIndonesianDate(a.added);
+          const dateB = parseIndonesianDate(b.added);
+          return dateA.getTime() - dateB.getTime();
+        });
+      case 'added-desc':
+        return sorted.sort((a, b) => {
+          const dateA = parseIndonesianDate(a.added);
+          const dateB = parseIndonesianDate(b.added);
+          return dateB.getTime() - dateA.getTime();
+        });
+      default:
+        return sorted;
+    }
+  };
+
+  // --- FILTERING DAN SORTING DENGAN useMemo ---
+  const filteredSongs = useMemo(() => {
+    const filtered = songs.filter(song => {
+      // Filter berdasarkan grup playlist (kombinasi AND antar grup)
+      const matchesNada = selectedPlaylists.nada === null || song.playlist.includes(selectedPlaylists.nada);
+      const matchesMood = selectedPlaylists.mood === null || song.playlist.includes(selectedPlaylists.mood);
+      const matchesJenis = selectedPlaylists.jenis === null || song.playlist.includes(selectedPlaylists.jenis);
+      const matchesLikedBy = selectedPlaylists.likedBy === null || song.playlist.includes(selectedPlaylists.likedBy);
+      
+      const matchesSearch = searchQuery === '' || 
+        song.judul.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        song.tahun.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        song.added.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (song.negara && song.negara.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      return matchesLikedBy && matchesNada && matchesMood && matchesJenis && matchesSearch;
+    });
+
+    return sortSongs(filtered, sortCriteria);
+  }, [songs, selectedPlaylists, searchQuery, sortCriteria]);
+
+  // Daftar playlist yang ditampilkan sebagai filter (hanya kategori utama)
+  const playlistGroups = {
+    likedBy: [
+      { id: 'b', name: 'Taufiq' },
+      { id: 'c', name: 'Nadzar' },
+    ],
+    nada: [
+      { id: '1', name: 'Nada Tinggi' },
+      { id: '2', name: 'Nada Cepat' },
+      { id: '3', name: 'Nada Santai' },
+    ],
+    mood: [
+      { id: '4', name: 'Sedih' },
+      { id: '5', name: 'Bahagia' },
+      { id: '6', name: 'Adrenalin' },
+      { id: 'a', name: 'Normal' },
+      { id: 'd', name: 'Rap' },
+    ],
+    jenis: [
+      { id: '7', name: 'Nyanyiable' },
+      { id: '8', name: 'Hearingable' },
+    ],
+  };
+  
+  // Mapping nomor playlist ke nama
+  const playlistNames: { [key: string]: string } = { 
+    'b': 'Taufiq',
+    'c': 'Nadzar',
+
+    '1': 'Nada Tinggi',
+    '2': 'Nada Cepat',
+    '3': 'Nada Santai',
+
+    '4': 'Sedih',
+    '5': 'Bahagia',
+    '6': 'Adrenalin',
+    'a' : "Normal",
+    'd' : "Rap",
+
+    '7': 'Nyanyiable',
+    '8': 'Hearingable',
+
+    // ... negara-negara
+
+    // --- Asia Tenggara, Timur, dan Selatan ---
+    '9': 'Indonesia',
+    '10': 'Korea Selatan',
+    '11': 'Jepang',
+    '12': 'Barat (Kategori Umum)',
+    '13': 'Tiongkok',
+    '14': 'Filipina',
+    '15': 'Vietnam',
+    '16': 'Thailand',
+    '17': 'Malaysia',
+    '18': 'Singapura',
+    '19': 'Myanmar',
+    '20': 'Kamboja',
+    '21': 'Laos',
+    '22': 'Brunei',
+    '23': 'Timor Leste',
+    '24': 'Korea Utara',
+    '25': 'India',
+    '26': 'Pakistan',
+    '27': 'Bangladesh',
+    '28': 'Nepal',
+    '29': 'Sri Lanka',
+    '30': 'Maladewa',
+    '31': 'Bhutan',
+    
+    // --- Asia Tengah dan Barat (Timur Tengah) ---
+    '32': 'Afganistan',
+    '33': 'Kazakhstan',
+    '34': 'Uzbekistan',
+    '35': 'Turkmenistan',
+    '36': 'Kirgistan',
+    '37': 'Tajikistan',
+    '38': 'Iran',
+    '39': 'Irak',
+    '40': 'Arab Saudi',
+    '41': 'Uni Emirat Arab',
+    '42': 'Qatar',
+    '43': 'Bahrain',
+    '44': 'Kuwait',
+    '45': 'Oman',
+    '46': 'Yaman',
+    '47': 'Suriah',
+    '48': 'Yordania',
+    '49': 'Lebanon',
+    '50': 'Israel',
+    '51': 'Palestina (Negara pengamat PBB)',
+    '52': 'Turki',
+    '53': 'Siprus',
+    '54': 'Georgia',
+    '55': 'Armenia',
+    '56': 'Azerbaijan',
+    
+    // --- Eropa Utara dan Barat ---
+    '57': 'Rusia',
+    '58': 'Jerman',
+    '59': 'Prancis',
+    '60': 'Inggris Raya',
+    '61': 'Italia',
+    '62': 'Spanyol',
+    '63': 'Belanda',
+    '64': 'Belgia',
+    '65': 'Luksemburg',
+    '66': 'Swiss',
+    '67': 'Austria',
+    '68': 'Irlandia',
+    '69': 'Portugal',
+    '70': 'Norwegia',
+    '71': 'Swedia',
+    '72': 'Finlandia',
+    '73': 'Islandia',
+    '74': 'Denmark',
+    '75': 'Estonia',
+    '76': 'Latvia',
+    '77': 'Lituania',
+
+    // --- Eropa Selatan, Timur, dan Balkan ---
+    '78': 'Polandia',
+    '79': 'Ceko',
+    '80': 'Slowakia',
+    '81': 'Hungaria',
+    '82': 'Rumania',
+    '83': 'Bulgaria',
+    '84': 'Yunani',
+    '85': 'Albania',
+    '86': 'Kroasia',
+    '87': 'Serbia',
+    '88': 'Bosnia dan Herzegovina',
+    '89': 'Montenegro',
+    '90': 'Makedonia Utara',
+    '91': 'Slovenia',
+    '92': 'Malta',
+    '93': 'San Marino',
+    '94': 'Vatikan',
+    '95': 'Monako',
+    '96': 'Andorra',
+    '97': 'Liechtenstein',
+    '98': 'Moldova',
+    '99': 'Ukraina',
+    '100': 'Belarus',
+
+    // --- Amerika Utara dan Tengah ---
+    '101': 'Amerika Serikat',
+    '102': 'Kanada',
+    '103': 'Meksiko',
+    '104': 'Guatemala',
+    '105': 'Honduras',
+    '106': 'El Salvador',
+    '107': 'Nikaragua',
+    '108': 'Kosta Rika',
+    '109': 'Panama',
+    '110': 'Belize',
+
+    // --- Karibia ---
+    '111': 'Kuba',
+    '112': 'Haiti',
+    '113': 'Republik Dominika',
+    '114': 'Jamaika',
+    '115': 'Trinidad dan Tobago',
+    '116': 'Bahama',
+    '117': 'Barbados',
+    '118': 'Grenada',
+    '119': 'Saint Vincent dan Grenadine',
+    '120': 'Saint Lucia',
+    '121': 'Saint Kitts dan Nevis',
+    '122': 'Antigua dan Barbuda',
+    '123': 'Dominika',
+
+    // --- Amerika Selatan ---
+    '124': 'Brasil',
+    '125': 'Argentina',
+    '126': 'Kolombia',
+    '127': 'Peru',
+    '128': 'Cile',
+    '129': 'Ekuador',
+    '130': 'Venezuela',
+    '131': 'Bolivia',
+    '132': 'Paraguay',
+    '133': 'Uruguay',
+    '134': 'Guyana',
+    '135': 'Suriname',
+
+    // --- Afrika Utara ---
+    '136': 'Mesir',
+    '137': 'Libya',
+    '138': 'Tunisia',
+    '139': 'Aljazair',
+    '140': 'Maroko',
+    '141': 'Sudan',
+    '142': 'Sudan Selatan',
+    '143': 'Mauritania',
+
+    // --- Afrika Barat ---
+    '144': 'Nigeria',
+    '145': 'Ghana',
+    '146': 'Pantai Gading',
+    '147': 'Senegal',
+    '148': 'Mali',
+    '149': 'Burkina Faso',
+    '150': 'Niger',
+    '151': 'Gambia',
+    '152': 'Guinea',
+    '153': 'Guinea-Bissau',
+    '154': 'Sierra Leone',
+    '155': 'Liberia',
+    '156': 'Togo',
+    '157': 'Benin',
+    '158': 'Tanjung Verde',
+
+    // --- Afrika Tengah ---
+    '159': 'Kamerun',
+    '160': 'Republik Demokratik Kongo',
+    '161': 'Republik Kongo',
+    '162': 'Afrika Tengah',
+    '163': 'Chad',
+    '164': 'Gabon',
+    '165': 'Guinea Khatulistiwa',
+    '166': 'Sao Tome dan Principe',
+
+    // --- Afrika Timur ---
+    '167': 'Etiopia',
+    '168': 'Kenya',
+    '169': 'Tanzania',
+    '170': 'Uganda',
+    '171': 'Rwanda',
+    '172': 'Burundi',
+    '173': 'Somalia',
+    '174': 'Jibuti',
+    '175': 'Eritrea',
+    '176': 'Komoro',
+    '177': 'Seychelles',
+    '178': 'Madagaskar',
+    '179': 'Mauritius',
+    '180': 'Mozambik',
+
+    // --- Afrika Selatan ---
+    '181': 'Afrika Selatan',
+    '182': 'Zimbabwe',
+    '183': 'Zambia',
+    '184': 'Angola',
+    '185': 'Namibia',
+    '186': 'Botswana',
+    '187': 'Lesotho',
+    '188': 'Eswatini (Swaziland)',
+    '189': 'Malawi',
+
+    // --- Oseania dan Kepulauan Pasifik ---
+    '190': 'Australia',
+    '191': 'Selandia Baru',
+    '192': 'Papua Nugini',
+    '193': 'Fiji',
+    '194': 'Samoa',
+    '195': 'Tonga',
+    '196': 'Vanuatu',
+    '197': 'Kepulauan Solomon',
+    '198': 'Kiribati',
+    '199': 'Tuvalu',
+    '200': 'Palau',
+    '201': 'Mikronesia',
+    '202': 'Kepulauan Marshall',
+    '203': 'Nauru',
+    // ... tambahkan semua mapping hingga 203 sesuai dengan data Anda
+  };
+
+  // Helper function untuk convert playlist number ke nama
+  const getPlaylistName = (playlistNumber: string): string => {
+    return playlistNames[playlistNumber] || playlistNumber;
+  };
+
+  const togglePlaylistSelection = (groupKey: 'nada' | 'mood' | 'jenis' | 'likedBy', playlistId: string) => {
+    setSelectedPlaylists(prev => ({
+      ...prev,
+      [groupKey]: prev[groupKey] === playlistId ? null : playlistId
+    }));
+  };
+
+  const clearAllFilters = () => {
+    setSelectedPlaylists({ nada: null, mood: null, jenis: null, likedBy: null });
+    showNotification('🔄 Semua filter dibersihkan');
+  };
+
+  const hasActiveFilters = () => {
+    return selectedPlaylists.nada !== null || 
+          selectedPlaylists.mood !== null || 
+          selectedPlaylists.jenis !== null ||
+          selectedPlaylists.likedBy !== null;
+  };
 
   const showNotification = (message: string) => {
     setNotification(message);
@@ -442,7 +815,12 @@ export default function MusicPage() {
   };
 
   const addToQueue = (song: Song) => {
-    setQueue(prev => [...prev, song]);
+    setQueue(prev => {
+      // Hapus lagu yang sama jika sudah ada
+      const filtered = prev.filter(s => s.id !== song.id);
+      // Tambahkan ke posisi terakhir
+      return [...filtered, song];
+    });
     showNotification(`✅ "${song.judul}" ditambahkan ke antrian`);
   };
 
@@ -473,6 +851,23 @@ export default function MusicPage() {
     setUserClosedSidebar(isSidebarOpen); 
   };
 
+  const handleSortChange = (criteria: SortCriteria) => {
+    setSortCriteria(criteria);
+    setShowSortDropdown(false);
+    
+    const sortLabels: Record<SortCriteria, string> = {
+      'default': 'Urutan Default',
+      'judul-asc': 'Judul A-Z',
+      'judul-desc': 'Judul Z-A',
+      'tahun-asc': 'Tahun Lama-Baru',
+      'tahun-desc': 'Tahun Baru-Lama',
+      'added-asc': 'Ditambahkan Lama-Baru',
+      'added-desc': 'Ditambahkan Baru-Lama'
+    };
+    
+    showNotification(`📊 ${sortLabels[criteria]}`);
+  };
+
   if (!mounted) return <div className="h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>;
 
   return (
@@ -497,39 +892,185 @@ export default function MusicPage() {
             {searchQuery && <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"><X size={18} /></button>}
           </div>
 
-          <div className="flex gap-2 mb-4 flex-wrap">
-            {playlists.map(pl => (
-              <button key={pl} onClick={() => setSelectedPlaylist(pl)} className={`px-3 py-1 rounded-full text-sm ${selectedPlaylist === pl ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}>{pl === 'all' ? 'All' : pl}</button>
-            ))}
+          <div className="mb-4 space-y-3">
+          {/* Header dengan tombol clear */}
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-semibold text-gray-400">Filter Playlist</label>
+            {hasActiveFilters() && (
+              <button 
+                onClick={clearAllFilters}
+                className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
+              >
+                <X size={12} /> Clear All
+              </button>
+            )}
+          </div>
+
+          {/* Grup Liked by - DIPINDAHKAN KE ATAS */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Liked by</label>
+            <div className="flex gap-2 flex-wrap">
+              {playlistGroups.likedBy.map(pl => (
+                <button 
+                  key={pl.id} 
+                  onClick={() => togglePlaylistSelection('likedBy', pl.id)} 
+                  className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                    selectedPlaylists.likedBy === pl.id 
+                      ? 'bg-pink-600 text-white' 
+                      : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                  }`}
+                >
+                  {pl.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Grup Nada */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Nada</label>
+              <div className="flex gap-2 flex-wrap">
+                {playlistGroups.nada.map(pl => (
+                  <button 
+                    key={pl.id} 
+                    onClick={() => togglePlaylistSelection('nada', pl.id)} 
+                    className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                      selectedPlaylists.nada === pl.id 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                    }`}
+                  >
+                    {pl.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Grup Mood */}
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Mood</label>
+              <div className="flex gap-2 flex-wrap">
+                {playlistGroups.mood.map(pl => (
+                  <button 
+                    key={pl.id} 
+                    onClick={() => togglePlaylistSelection('mood', pl.id)} 
+                    className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                      selectedPlaylists.mood === pl.id 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                    }`}
+                  >
+                    {pl.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Grup Jenis */}
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Jenis</label>
+              <div className="flex gap-2 flex-wrap">
+                {playlistGroups.jenis.map(pl => (
+                  <button 
+                    key={pl.id} 
+                    onClick={() => togglePlaylistSelection('jenis', pl.id)} 
+                    className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                      selectedPlaylists.jenis === pl.id 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                    }`}
+                  >
+                    {pl.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Info filter aktif */}
+            {hasActiveFilters() && (
+              <div className="text-xs text-gray-400 bg-gray-700 px-3 py-2 rounded">
+                Filter aktif: {[
+                  selectedPlaylists.likedBy && playlistGroups.likedBy.find(p => p.id === selectedPlaylists.likedBy)?.name,
+                  selectedPlaylists.nada && playlistGroups.nada.find(p => p.id === selectedPlaylists.nada)?.name,
+                  selectedPlaylists.mood && playlistGroups.mood.find(p => p.id === selectedPlaylists.mood)?.name,
+                  selectedPlaylists.jenis && playlistGroups.jenis.find(p => p.id === selectedPlaylists.jenis)?.name,
+                ].filter(Boolean).join(' + ')}
+              </div>
+            )}
+          </div>
+
+          {/* DROPDOWN SORTING */}
+          <div className="mb-4 relative">
+            <button 
+              onClick={() => setShowSortDropdown(!showSortDropdown)}
+              className="w-full flex items-center justify-between px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <ArrowUpDown size={16} />
+                {sortCriteria === 'default' ? 'Urutkan' : 
+                 sortCriteria === 'judul-asc' ? 'Judul A-Z' :
+                 sortCriteria === 'judul-desc' ? 'Judul Z-A' :
+                 sortCriteria === 'tahun-asc' ? 'Tahun ↑' :
+                 sortCriteria === 'tahun-desc' ? 'Tahun ↓' :
+                 sortCriteria === 'added-asc' ? 'Ditambahkan ↑' :
+                 'Ditambahkan ↓'}
+              </span>
+              <ChevronDown size={16} className={`transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {showSortDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-gray-700 rounded-lg shadow-lg z-10 overflow-hidden">
+                <button onClick={() => handleSortChange('default')} className="w-full text-left px-3 py-2 hover:bg-gray-600 text-sm">Urutan Default</button>
+                <button onClick={() => handleSortChange('judul-asc')} className="w-full text-left px-3 py-2 hover:bg-gray-600 text-sm">Judul A-Z</button>
+                <button onClick={() => handleSortChange('judul-desc')} className="w-full text-left px-3 py-2 hover:bg-gray-600 text-sm">Judul Z-A</button>
+                <button onClick={() => handleSortChange('tahun-asc')} className="w-full text-left px-3 py-2 hover:bg-gray-600 text-sm">Tahun Lama-Baru</button>
+                <button onClick={() => handleSortChange('tahun-desc')} className="w-full text-left px-3 py-2 hover:bg-gray-600 text-sm">Tahun Baru-Lama</button>
+                <button onClick={() => handleSortChange('added-asc')} className="w-full text-left px-3 py-2 hover:bg-gray-600 text-sm">Ditambahkan Lama-Baru</button>
+                <button onClick={() => handleSortChange('added-desc')} className="w-full text-left px-3 py-2 hover:bg-gray-600 text-sm">Ditambahkan Baru-Lama</button>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2 pb-4"> 
             {filteredSongs.length === 0 ? (
               <div className="text-center text-gray-400 py-8"><Music size={48} className="mx-auto mb-4 opacity-50" /><p className="text-sm">Tidak ada lagu</p></div>
             ) : (
-              filteredSongs.map((song) => (
-                <div key={song.id} className={`p-3 rounded flex items-center justify-between gap-3 hover:bg-gray-700 ${currentSong?.id === song.id ? 'bg-gray-700 border-l-4 border-blue-500' : ''}`}>
-                  <div 
-                    onClick={() => { 
-                      setCurrentSong(song); 
-                      setIsPlaying(true); 
-                      setIsCurrentlyPlayingFromQueue(false); 
-                      if (window.innerWidth < 768) { 
-                        setIsSidebarOpen(false); 
-                        setUserClosedSidebar(true); 
-                      } 
-                    }} 
-                    className="flex-1 cursor-pointer min-w-0"
-                  >
-                    <div className="font-semibold text-sm truncate">{song.judul}</div>
-                    {/* MODIFIKASI TAMPILAN PROPERTY */}
-                    <div className="text-xs text-gray-400 truncate">
-                        {song.tahun} • Added {song.added} {/* <-- TAMPILAN BARU */}
+              filteredSongs.map((song) => {
+                // Cari nama negara dari playlist 9-203
+                const countryPlaylist = song.playlist.find(p => {
+                  const num = parseInt(p);
+                  return num >= 9 && num <= 203;
+                });
+                const countryName = countryPlaylist ? getPlaylistName(countryPlaylist) : null;
+
+                return (
+                  <div key={song.id} className={`p-3 rounded flex items-center justify-between gap-3 hover:bg-gray-700 ${currentSong?.id === song.id ? 'bg-gray-700 border-l-4 border-blue-500' : ''}`}>
+                    <div 
+                      onClick={() => { 
+                        setCurrentSong(song); 
+                        setIsPlaying(true); 
+                        setIsCurrentlyPlayingFromQueue(false); 
+                        if (window.innerWidth < 768) { 
+                          setIsSidebarOpen(false); 
+                          setUserClosedSidebar(true); 
+                        } 
+                      }} 
+                      className="flex-1 cursor-pointer min-w-0"
+                    >
+                      <div className="font-semibold text-sm truncate">{song.judul}</div>
+                      <div className="text-xs text-gray-400 truncate">
+                          {song.tahun} • Added {song.added}{countryName && ` • ${countryName}`}
+                      </div>
                     </div>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToQueue(song); }} 
+                      className={`flex-shrink-0 ${queue.some(q => q.id === song.id) ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white p-2 rounded-full transition-colors`}
+                    >
+                      <List size={16} />
+                    </button>
                   </div>
-                  <button onClick={(e) => { e.stopPropagation(); addToQueue(song); }} className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full transition-colors"><List size={16} /></button>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -537,7 +1078,7 @@ export default function MusicPage() {
 
       {isSidebarOpen && <div className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30" onClick={() => { setIsSidebarOpen(false); setUserClosedSidebar(true); }} />}
 
-      {/* Main Content: min-w-0 untuk menghindari overflow horizontal */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0"> 
         
         {/* Header */}
@@ -562,32 +1103,42 @@ export default function MusicPage() {
         </div>
 
         {/* Player Area: overflow-y-auto untuk mengatasi layar kecil vertical space */}
-        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-4 md:p-8 overflow-y-auto relative">
+        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 overflow-hidden relative">
           {currentSong ? (
             <>
               {/* --- CONTAINER 1: VIDEO PLAYER (Visibility Diubah) --- */}
               {/* Menggunakan kelas kustom untuk menyembunyikan tanpa display: none */}
               <div 
-                className={`flex-1 h-full max-h-full flex flex-col items-center justify-center transition-all duration-300 ${mode === 'audio' ? 'player-invisible' : 'block'}`}
+                className={`w-full h-full flex flex-col items-center justify-center p-4 md:p-8 transition-all duration-300 ${mode === 'audio' ? 'player-invisible' : 'block'}`}
               >
-                <div className="w-full max-w-4xl bg-black rounded-lg overflow-hidden relative" style={{ paddingBottom: '56.25%', height: 0 }}>
-                  <div id="youtube-player" className="absolute top-0 left-0 w-full h-full"></div>
+                <div className="w-full flex-1 flex items-center justify-center min-h-0">
+                  <div className="w-full h-full bg-black rounded-lg overflow-hidden relative" style={{ maxHeight: '100%', aspectRatio: '16/9', maxWidth: 'min(100%, calc(100vh * 16/9))' }}>
+                    <div id="youtube-player" className="absolute top-0 left-0 w-full h-full"></div>
+                  </div>
                 </div>
-                <div className="mt-4 text-center flex-shrink-0">
-                  <h2 className="text-xl md:text-2xl font-bold">{currentSong.judul}</h2>
-                  <p className="text-gray-400 text-sm md:text-base">{currentSong.tahun} (Added {currentSong.added})</p>
+                <div className="mt-4 text-center flex-shrink-0 max-h-[20%] overflow-y-auto">
+                  <h2 className="text-lg md:text-xl lg:text-2xl font-bold">{currentSong.judul}</h2>
+                  <p className="text-gray-400 text-xs md:text-sm">{currentSong.tahun} • Added {currentSong.added}</p>
+                  {currentSong.playlist && currentSong.playlist.length > 0 && (
+                    <p className="text-gray-500 text-xs md:text-sm mt-1">
+                      {currentSong.playlist.map(p => getPlaylistName(p)).join(', ')}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* --- CONTAINER 2: AUDIO UI (COVER ART) --- */}
-              <div 
-                className={`text-center max-w-md w-full transition-all duration-300 ${mode === 'video' ? 'hidden' : 'block'}`}
-              >
+              <div className={`text-center max-w-md w-full transition-all duration-300 ${mode === 'video' ? 'hidden' : 'block'}`}>
                 <div className="w-40 h-40 md:w-64 md:h-64 mx-auto bg-gradient-to-br from-purple-600 via-pink-500 to-blue-600 rounded-full flex items-center justify-center mb-6 md:mb-8 shadow-2xl animate-pulse-slow">
                   <Music size={60} className="md:w-[120px] md:h-[120px] text-white" />
                 </div>
                 <h1 className="text-xl md:text-3xl font-bold mb-2 px-4">{currentSong.judul}</h1>
-                <p className="text-gray-400 text-sm md:text-lg mb-6">{currentSong.tahun} (Added {currentSong.added})</p>
+                <p className="text-gray-400 text-sm md:text-lg mb-4">{currentSong.tahun} • Added {currentSong.added}</p>
+                {currentSong.playlist && currentSong.playlist.length > 0 && (
+                  <p className="text-gray-500 text-xs md:text-sm px-4">
+                    {currentSong.playlist.map(p => getPlaylistName(p)).join(', ')}
+                  </p>
+                )}
               </div>
             </>
           ) : (
@@ -660,7 +1211,7 @@ export default function MusicPage() {
         <>
           <div className="md:hidden fixed inset-0 bg-black bg-opacity-30 z-40 backdrop-blur-sm" onClick={() => setShowQueue(false)} />
           {/* Menggunakan h-auto max-h-[70dvh] untuk mobile agar responsif terhadap keyboard/browser bar */}
-          <div className="fixed md:relative bottom-0 md:bottom-auto right-0 md:right-auto w-full md:w-80 h-auto max-h-[70dvh] md:h-full bg-gray-800 p-4 overflow-y-auto border-t md:border-t-0 md:border-l border-gray-700 z-50 rounded-t-2xl md:rounded-none">
+          <div className="fixed md:relative bottom-0 md:bottom-auto right-0 md:right-auto w-full md:w-80 h-[90dvh] md:h-full bg-gray-800 p-4 overflow-y-auto border-t md:border-t-0 md:border-l border-gray-700 z-50 rounded-t-2xl md:rounded-none">
             <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <h2 className="text-lg md:text-xl font-bold">📋 Antrian ({queue.length})</h2>
               <div className="flex gap-2">
@@ -685,6 +1236,17 @@ export default function MusicPage() {
                     }}
                   >
                     <div className="font-semibold text-sm truncate">{song.judul}</div>
+                    <div className="text-xs text-gray-400 truncate">
+                      {song.tahun} • Added {song.added}
+                      {(() => {
+                        const countryPlaylist = song.playlist.find(p => {
+                          const num = parseInt(p);
+                          return num >= 9 && num <= 203;
+                        });
+                        const countryName = countryPlaylist ? getPlaylistName(countryPlaylist) : null;
+                        return countryName ? ` • ${countryName}` : '';
+                      })()}
+                    </div>
                   </div>
                   
                   <div className="flex gap-0 items-center flex-shrink-0">
@@ -752,8 +1314,8 @@ export default function MusicPage() {
                 height: 100dvh;
             }
             /* Memastikan antrian mobile menggunakan dvh */
-            .max-h-\[70dvh\] {
-                 max-height: 70dvh;
+            .h-\[90dvh\] {
+                height: 90dvh;
             }
         }
 
