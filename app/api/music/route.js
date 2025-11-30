@@ -23,7 +23,8 @@ export async function GET() {
             //     // "/music/358.mp3",
             //     "https://drive.google.com/file/d/15WiaejmDrp1Ojmyy5lX9p3GyTG9guy3K/view?usp=drive_link",
             // ],
-            tahun: "August 2023",
+            tahun: "2012",
+            added: "9 November 2025",
             playlist : [
                 "MYLK",
                 "CB",
@@ -40,7 +41,8 @@ export async function GET() {
             //     // "https://drive.google.com/uc?export=download&id=1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa",
             //     "https://drive.google.com/file/d/1JBA0Nrp1Dr316eD_gmDLmA0okOMn_sUa/view",
             // ],
-            tahun: "August 2023",
+            tahun: "2019?",
+            added: "25 Maret 2020",
             playlist : [
                 "MYLK",
             ],
@@ -52,16 +54,18 @@ export async function GET() {
             // images: [
             //     // "/music/358.mp3",
             // ],
-            tahun: "August 2023",
+            tahun: "2014",
+            added: "25 Maret 2020",
             playlist : [
                 "MYLK",
             ],
         },
         {
             id: 3,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "3. Falling, Trevor Daniel",
+            link: "https://www.youtube.com/watch?v=f2KmX0ZmGB0",
+            tahun: "2020",
+            added: "25 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -69,9 +73,10 @@ export async function GET() {
         },
         {
             id: 4,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "4. Yummy, Justin Bieber",
+            link: "https://www.youtube.com/watch?v=zD8dy-kj3qs",
+            tahun: "3 Januari 2020",
+            added: "25 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -79,19 +84,22 @@ export async function GET() {
         },
         {
             id: 5,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "5. Someone You Loved, Lewis Capaldi",
+            link: "https://www.youtube.com/watch?v=ywU6uYEmRfs",
+            tahun: "8 November 2018",
+            added: "25 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
+                "CB",
             ],
         },
         {
             id: 6,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "6. Memories, Maroon 5",
+            link: "https://www.youtube.com/watch?v=Gqmo9jstTTU",
+            tahun: "20 September 2019",
+            added: "25 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -99,9 +107,10 @@ export async function GET() {
         },
         {
             id: 7,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "7. Roxanne, Arizona Zervas",
+            link: "https://www.youtube.com/watch?v=96RZInZAD6Y",
+            tahun: "10 Oktober 2019",
+            added: "25 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -109,9 +118,10 @@ export async function GET() {
         },
         {
             id: 8,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "8. Nyaman, Andmesh",
+            link: "https://www.youtube.com/watch?v=E_1SdECi8lg",
+            tahun: "22 November 2019",
+            added: "25 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -119,9 +129,10 @@ export async function GET() {
         },
         {
             id: 9,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "9. Any Song, ZICO",
+            link: "https://www.youtube.com/watch?v=Qd0NqTEz2Qk",
+            tahun: "2020",
+            added: "25 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -129,9 +140,10 @@ export async function GET() {
         },
         {
             id: 10,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "10. It's You, Ali Gatie",
+            link: "https://www.youtube.com/watch?v=a1obpxiMZHs",
+            tahun: "2019?",
+            added: "25 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -139,9 +151,10 @@ export async function GET() {
         },
         {
             id: 11,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "11. Halu, Feby Putri",
+            link: "https://www.youtube.com/watch?v=5qZJ6DJzcLE",
+            tahun: "18 Agustus 2019",
+            added: "25 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -149,9 +162,10 @@ export async function GET() {
         },
         {
             id: 12,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "12. Waktu Yang Salah, Fiersa Besari",
+            link: "https://www.youtube.com/watch?v=iyocjlk6z9E",
+            tahun: "2014",
+            added: "25 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -159,9 +173,10 @@ export async function GET() {
         },
         {
             id: 13,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "13. Psycho , Red Velvet",
+            link: "https://www.youtube.com/watch?v=EAYvJ3E0ysw",
+            tahun: "23 Desember 2019",
+            added: "25 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -169,9 +184,10 @@ export async function GET() {
         },
         {
             id: 14,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "14. Tolong, Budi Doremi",
+            link: "https://www.youtube.com/watch?v=UXmfPh5LjOY",
+            tahun: "2018",
+            added: "25 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -179,9 +195,10 @@ export async function GET() {
         },
         {
             id: 15,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "15. The Box, Roddy Ricch",
+            link: "https://www.youtube.com/watch?v=2Ok95dyfwHI",
+            tahun: "6 Desember 2019",
+            added: "30 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -189,9 +206,10 @@ export async function GET() {
         },
         {
             id: 16,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "16. DIA DELÍCIA slowed version, Nakama, ΣP",
+            link: "https://www.youtube.com/watch?v=nPafxUt-XUE",
+            tahun: "2025",
+            added: "30 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -199,9 +217,10 @@ export async function GET() {
         },
         {
             id: 17,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "17. COMETHRUE, JEREMY ZUCKER",
+            link: "https://www.youtube.com/watch?v=jovxjsTkBeE",
+            tahun: "28 September 2018",
+            added: "30 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -209,9 +228,10 @@ export async function GET() {
         },
         {
             id: 18,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "18. Tonight You Belong to Me, Eddie Vedder",
+            link: "https://www.youtube.com/watch?v=ytuxo3aZtD4",
+            tahun: "2011",
+            added: "30 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -219,9 +239,10 @@ export async function GET() {
         },
         {
             id: 19,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "19. Happy, Skinnyfabs",
+            link: "https://www.youtube.com/watch?v=kYzibhSWknc",
+            tahun: "5 Juli 2019",
+            added: "30 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
@@ -229,9 +250,10 @@ export async function GET() {
         },
         {
             id: 20,
-            judul: "358. Where Have You Been, Rihanna",
-            link: "https://www.youtube.com/watch?v=FF3s3gJ-ZK4",
-            tahun: "August 2023",
+            judul: "20. Bagaikan Langit, Potret",
+            link: "https://www.youtube.com/watch?v=JTGUhj2qnhE",
+            tahun: "1998",
+            added: "30 Maret 2020",
             playlist : [
                 "MYLK",
                 "SED",
