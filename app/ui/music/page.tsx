@@ -3,8 +3,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, List, ChevronLeft, ChevronRight, Music, Search, X, Volume2, Video, ChevronUp, ChevronDown } from 'lucide-react';
 
-// YouTube Player API Types
+// =========================================================
+// KOREKSI TYPEDEFS DENGAN DECLARATION MERGING
+// =========================================================
 declare global {
+  // Biarkan TypeScript menggunakan definisi bawaan untuk WakeLockSentinel dan Navigator.wakeLock
+  // Hanya tambahkan ekstensi untuk Window (YouTube API)
+
+  // NOTE: Jika WakeLockSentinel tidak ditemukan setelah ini, Anda bisa mengimpor
+  // atau mendeklarasikannya di tempat lain, TAPI BUKAN di Navigator.
+
+  // Definisi YouTube Player API Types (Wajib)
   interface Window {
     YT: any;
     onYouTubeIframeAPIReady: () => void;
@@ -12,6 +21,7 @@ declare global {
     clearInterval: (handle: number | undefined) => void;
   }
 }
+// =========================================================
 
 // Interface Song - DITAMBAH properti 'added'
 interface Song {
@@ -24,6 +34,9 @@ interface Song {
 }
 
 const QUEUE_STORAGE_KEY = 'musicPlayerQueue';
+
+// ... sisa kode lainnya (tidak perlu diubah) ...
+// 
 
 const getOriginUrl = (): string | undefined => {
   if (typeof window !== 'undefined') {
@@ -65,6 +78,47 @@ export default function MusicPage() {
   const playerRef = useRef<any>(null);
 
   const [isCurrentlyPlayingFromQueue, setIsCurrentlyPlayingFromQueue] = useState(false);
+  
+  // STATE BARU UNTUK WAKE LOCK
+  const [wakeLock, setWakeLock] = useState<WakeLockSentinel | null>(null);
+
+  // --- WAKE LOCK LOGIC ---
+  const requestWakeLock = async () => {
+      // Hanya request Wake Lock jika sedang bermain video atau musik dan belum ada lock
+      if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && !wakeLock) {
+          try {
+              const sentinel = await navigator.wakeLock.request('screen');
+              setWakeLock(sentinel);
+              console.log('Wake Lock berhasil diaktifkan.');
+              
+              // Lepaskan lock jika tab dilepas
+              sentinel.addEventListener('release', () => {
+                  console.log('Wake Lock telah dilepaskan oleh browser.');
+                  setWakeLock(null);
+              });
+          } catch (err) {
+              console.error(`Wake Lock Error: ${(err as Error).name}: ${(err as Error).message}`);
+          }
+      }
+  };
+
+  const releaseWakeLock = () => {
+      if (wakeLock) {
+          wakeLock.release();
+          setWakeLock(null);
+          console.log('Wake Lock dilepaskan secara manual.');
+      }
+  };
+
+  // Effect untuk mengelola Wake Lock
+  useEffect(() => {
+      if (isPlaying) {
+          requestWakeLock();
+      } else {
+          releaseWakeLock();
+      }
+      return () => releaseWakeLock();
+  }, [isPlaying]);
 
   // --- LOCAL STORAGE ---
   const saveQueueToLocalStorage = (newQueue: Song[]) => {
@@ -133,6 +187,7 @@ export default function MusicPage() {
 
   const fetchSongs = async (initialQueue: Song[]) => {
     try {
+      // NOTE: Endpoint '/api/music' harus menyediakan data dengan properti 'added'
       const response = await fetch('/api/music');
       const data: Song[] = await response.json();
       setSongs(data);
@@ -193,8 +248,6 @@ export default function MusicPage() {
           onReady: (event: any) => {
             setIsPlayerReady(true); 
             event.target.setVolume(volume);
-            
-            // Dihapus: event.target.playVideo() di sini untuk menghindari Error 150
             
             setDuration(event.target.getDuration()); 
             if (timeUpdateIntervalRef.current) {
@@ -512,9 +565,10 @@ export default function MusicPage() {
         <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-4 md:p-8 overflow-y-auto relative">
           {currentSong ? (
             <>
-              {/* --- CONTAINER 1: VIDEO PLAYER --- */}
+              {/* --- CONTAINER 1: VIDEO PLAYER (Visibility Diubah) --- */}
+              {/* Menggunakan kelas kustom untuk menyembunyikan tanpa display: none */}
               <div 
-                className={`flex-1 h-full max-h-full flex flex-col items-center justify-center transition-all duration-300 ${mode === 'audio' ? 'hidden' : 'block'}`}
+                className={`flex-1 h-full max-h-full flex flex-col items-center justify-center transition-all duration-300 ${mode === 'audio' ? 'player-invisible' : 'block'}`}
               >
                 <div className="w-full max-w-4xl bg-black rounded-lg overflow-hidden relative" style={{ paddingBottom: '56.25%', height: 0 }}>
                   <div id="youtube-player" className="absolute top-0 left-0 w-full h-full"></div>
@@ -674,6 +728,18 @@ export default function MusicPage() {
             margin: 0;
             padding: 0;
             overflow-x: hidden; 
+        }
+
+        /* Kelas kustom untuk menyembunyikan player tanpa display: none; */
+        .player-invisible {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            opacity: 0.01;
+            z-index: -10;
         }
 
         /* Menggunakan unit Dynamic Viewport Height (dvh) untuk Mobile (<768px) */
