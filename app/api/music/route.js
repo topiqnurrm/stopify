@@ -21,7 +21,7 @@ export async function GET() {
         8 : "Hearingable",
 
         b : "Taufiq",
-        c : "Nadzar",
+        c : "Nadya",
 
         // --- Asia Tenggara, Timur, dan Selatan ---
         9 : "Indonesia", 10 : "Korea Selatan", 11 : "Jepang", 12 : "Barat (Kategori Umum)", 13 : "Tiongkok", 14 : "Filipina", 15 : "Vietnam", 16 : "Thailand", 17 : "Malaysia", 18 : "Singapura", 19 : "Myanmar", 20 : "Kamboja", 21 : "Laos", 22 : "Brunei", 23 : "Timor Leste", 24 : "Korea Utara", 25 : "India", 26 : "Pakistan", 27 : "Bangladesh", 28 : "Nepal", 29 : "Sri Lanka", 30 : "Maladewa", 31 : "Bhutan",
@@ -59,12 +59,14 @@ export async function GET() {
         // --- Afrika Selatan ---
         181 : "Afrika Selatan", 182 : "Zimbabwe", 183 : "Zambia", 184 : "Angola", 185 : "Namibia", 186 : "Botswana", 187 : "Lesotho", 188 : "Eswatini (Swaziland)", 189 : "Malawi",
 
-        // --- Oseania dan Kepulauan Pasifik ---
-        190 : "Australia", 191 : "Selandia Baru", 192 : "Papua Nugini", 193 : "Fiji", 194 : "Samoa", 195 : "Tonga", 196 : "Vanuatu", 197 : "Kepulauan Solomon", 198 : "Kiribati", 199 : "Tuvalu", 200 : "Palau", 201 : "Mikronesia", 202 : "Kepulauan Marshall", 203 : "Nauru",
+        // --- Oseania dan Kepulauan Pasifik --- iki aku tuker nggo jawa dll
+        191 : "Selandia Baru", 192 : "Papua Nugini", 193 : "Fiji", 194 : "Samoa", 195 : "Tonga", 196 : "Vanuatu", 197 : "Kepulauan Solomon", 198 : "Kiribati", 199 : "Tuvalu", 200 : "Palau", 201 : "Mikronesia", 202 : "Kepulauan Marshall", 203 : "Nauru",
             
         // Total 195 negara berdaulat (Nomor 51 dihitung sebagai negara pengamat PBB).
         // Penomoran berlanjut hingga 203 karena daftar PBB berisi 193 anggota + 2 pengamat (Vatikan, Palestina).
         // Penomoran di atas mencapai 203 entri.
+
+        301 : "Jawa", 
     };
 
     const data = [
@@ -88,106 +90,106 @@ export async function GET() {
             id: 30,
             judul: "Play Date, Melanie Martinez",
             link: "https://www.youtube.com/watch?v=HqKeWRPBOsI",
-            tahun: "1998",
-            added: "30 Maret 2020",
+            tahun: "2015 Agustus 14",
+            added: "20 Mei 2020",
             playlist : [
                 "b",
-                "2", "5", "8", "9",
+                "2", "a", "8", "60",
             ],
         },
         {
             id: 29,
             judul: "LATHI, Weird Genius, Sara Fajira",
             link: "https://www.youtube.com/watch?v=DJSPhdOcj6M",
-            tahun: "1998",
-            added: "30 Maret 2020",
+            tahun: "2020 Februari 28",
+            added: "20 Mei 2020",
             playlist : [
                 "b",
-                "2", "5", "8", "9",
+                "1", "6", "8", "9", "301",
             ],
         },
         {
             id: 28,
             judul: "Party Legends, Mobile Legends: Bang Bang",
             link: "https://www.youtube.com/watch?v=dmic4e4IdWA",
-            tahun: "1998",
+            tahun: "2020 April - Mei",
             added: "30 Maret 2020",
             playlist : [
                 "b",
-                "2", "5", "8", "9",
+                "2", "5", "8", "60",
             ],
         },
         {
             id: 27,
             judul: "Peradaban, .Feast",
             link: "https://www.youtube.com/watch?v=EOsUSdze0tk",
-            tahun: "1998",
-            added: "30 Maret 2020",
+            tahun: "2018 Juli 13",
+            added: "13 Mei 2020",
             playlist : [
                 "b",
-                "2", "5", "8", "9",
+                "3", "6", "8", "9",
             ],
         },
         {
             id: 26,
             judul: "Bali, Rich Brian, Guapdad 4000",
             link: "https://www.youtube.com/watch?v=uOnjowaxnlI",
-            tahun: "1998",
-            added: "30 Maret 2020",
+            tahun: "2020 April",
+            added: "16 April 2020",
             playlist : [
                 "b",
-                "2", "5", "8", "9",
+                "2", "d", "8", "60",
             ],
         },
         {
             id: 25,
             judul: "Toosie Slide, Drake",
             link: "https://www.youtube.com/watch?v=Sxbs03nuBRE",
-            tahun: "1998",
-            added: "30 Maret 2020",
+            tahun: "2020 April 03",
+            added: "16 April 2020",
             playlist : [
                 "b",
-                "2", "5", "8", "9",
+                "2", "a", "8", "60",
             ],
         },
         {
             id: 24,
             judul: "Don’t Start Now, Dua Lipa",
             link: "https://www.youtube.com/watch?v=6G07RP-DnaE",
-            tahun: "1998",
-            added: "30 Maret 2020",
+            tahun: "2019 Oktober 31",
+            added: "15 April 2020",
             playlist : [
                 "b",
-                "2", "5", "8", "9",
+                "2", "5", "7", "60",
             ],
         },
         {
             id: 23,
             judul: "Rumah Ke Rumah, Hindia",
             link: "https://www.youtube.com/watch?v=zX7atb-_kvQ",
-            tahun: "1998",
-            added: "30 Maret 2020",
+            tahun: "2019 November 29",
+            added: "10 April 2020",
             playlist : [
                 "b",
-                "2", "5", "8", "9",
+                "3", "4", "8", "9",
             ],
         },
         {
             id: 22,
             judul: "Tatu, Happy Asmara",
             link: "https://www.youtube.com/watch?v=5rw5X7_98eU",
-            tahun: "1998",
+            tahun: "2020 Mei",
             added: "30 Maret 2020",
             playlist : [
                 "b",
-                "2", "5", "8", "9",
+                "2", "4", "8", "301", 
             ],
         },
         {
             id: 21,
             judul: "Lugu, Celine & Nadya",
             link: "https://www.youtube.com/watch?v=OluZLBnIpAg",
-            tahun: "1998",
+            tahun: "2018 Maret",
             added: "30 Maret 2020",
             playlist : [
                 "b",

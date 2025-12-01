@@ -220,20 +220,27 @@ export default function MusicPage() {
   }, [mounted, userClosedSidebar]);
 
   const fetchSongs = async (initialQueue: Song[]) => {
-    try {
-      const response = await fetch('/api/music');
-      const data: Song[] = await response.json();
-      
-      const songsWithCountry = data.map(song => {
-        const countryPlaylist = song.playlist.find(p => {
-          const num = parseInt(p);
-          return num >= 9 && num <= 203;
-        });
-        return {
-          ...song,
-          negara: countryPlaylist ? getPlaylistName(countryPlaylist) : undefined
-        };
+  try {
+    const response = await fetch('/api/music');
+    const data: Song[] = await response.json();
+    
+    const songsWithCountry = data.map(song => {
+      // Ambil SEMUA playlist negara (9-999)
+      const countryPlaylists = song.playlist.filter(p => {
+        const num = parseInt(p);
+        return num >= 9 && num <= 999;
       });
+      
+      // Gabungkan semua nama negara dengan koma
+      const negaraString = countryPlaylists.length > 0 
+        ? countryPlaylists.map(p => getPlaylistName(p)).join(', ')
+        : undefined;
+      
+      return {
+        ...song,
+        negara: negaraString
+      };
+    });
       
       setSongs(songsWithCountry);
       // Hanya set lagu pertama tanpa memaksa dari queue
@@ -276,12 +283,13 @@ export default function MusicPage() {
         videoId: videoId,
         playerVars: {
           autoplay: 0, 
-          controls: 1, 
-          disablekb: 0,
-          fs: 1,
+          controls: 0,  // Ubah dari 1 ke 0 untuk nonaktifkan kontrol bawaan
+          disablekb: 1,  // Ubah dari 0 ke 1 untuk disable keyboard
+          fs: 0,  // Ubah dari 1 ke 0 untuk disable fullscreen
           modestbranding: 1,
           playsinline: 1,
           rel: 0,
+          iv_load_policy: 3,  // Tambahkan: Disable annotations
           origin: playerOrigin 
         },
         events: {
@@ -434,7 +442,7 @@ export default function MusicPage() {
   const playlistGroups = {
     likedBy: [
       { id: 'b', name: 'Taufiq' },
-      { id: 'c', name: 'Nadzar' },
+      { id: 'c', name: 'Nadya' },
     ],
     nada: [
       { id: '1', name: 'Nada Tinggi' },
@@ -457,7 +465,7 @@ export default function MusicPage() {
   // Mapping nomor playlist ke nama
   const playlistNames: { [key: string]: string } = { 
     'b': 'Taufiq',
-    'c': 'Nadzar',
+    'c': 'Nadya',
 
     '1': 'Nada Tinggi',
     '2': 'Nada Cepat',
@@ -680,7 +688,7 @@ export default function MusicPage() {
     '189': 'Malawi',
 
     // --- Oseania dan Kepulauan Pasifik ---
-    '190': 'Australia',
+    '190': "Australia", 
     '191': 'Selandia Baru',
     '192': 'Papua Nugini',
     '193': 'Fiji',
@@ -695,6 +703,7 @@ export default function MusicPage() {
     '202': 'Kepulauan Marshall',
     '203': 'Nauru',
     // ... tambahkan semua mapping hingga 203 sesuai dengan data Anda
+    "301" : "Jawa", 
   };
 
   // Helper function untuk convert playlist number ke nama
@@ -1090,39 +1099,74 @@ export default function MusicPage() {
             <div className="text-center text-gray-400 py-8"><Music size={48} className="mx-auto mb-4 opacity-50" /><p className="text-sm">Tidak ada lagu</p></div>
               ) : (
                 filteredSongs.map((song, index) => {
-                  // Cari nama negara dari playlist 9-203
-                  const countryPlaylist = song.playlist.find(p => {
-                    const num = parseInt(p);
-                    return num >= 9 && num <= 203;
-                  });
-                  const countryName = countryPlaylist ? getPlaylistName(countryPlaylist) : null;
-
                   return (
-                    <div key={song.id} className={`p-3 rounded flex items-center gap-3 hover:bg-gray-700 ${currentSong?.id === song.id ? 'bg-gray-700 border-l-4 border-blue-500' : ''}`}>
-                      {/* Nomor urut */}
-                      <div className="flex-shrink-0 w-8 text-center text-sm text-gray-400 font-medium">
-                        {index + 1}
+                    <div 
+                      key={song.id} 
+                      className={`group flex items-center gap-3 p-3 rounded-lg transition-all duration-200 cursor-pointer hover:bg-gray-700 ${
+                        currentSong?.id === song.id 
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg scale-[1.02]' 
+                          : 'bg-gray-750 hover:scale-[1.01]'
+                      }`}
+                      onClick={() => { 
+                        setCurrentSong(song); 
+                        setIsPlaying(true); 
+                        setIsCurrentlyPlayingFromQueue(false); 
+                        if (window.innerWidth < 768) { 
+                          setIsSidebarOpen(false); 
+                          setUserClosedSidebar(true); 
+                        } 
+                      }}
+                    >
+                      {/* Nomor urut dengan animasi */}
+                      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                        currentSong?.id === song.id 
+                          ? 'bg-white text-blue-600 shadow-md' 
+                          : 'bg-gray-700 text-gray-400 group-hover:bg-gray-600'
+                      }`}>
+                        {currentSong?.id === song.id && isPlaying ? (
+                          <div className="flex gap-0.5 items-center justify-center h-4">
+                            <span className="w-0.5 bg-blue-600 rounded-full animate-pulse-bar" style={{height: '60%'}}></span>
+                            <span className="w-0.5 bg-blue-600 rounded-full animate-pulse-bar" style={{height: '100%', animationDelay: '0.2s'}}></span>
+                            <span className="w-0.5 bg-blue-600 rounded-full animate-pulse-bar" style={{height: '80%', animationDelay: '0.4s'}}></span>
+                          </div>
+                        ) : (
+                          index + 1
+                        )}
                       </div>
-                      <div
-                        onClick={() => { 
-                          setCurrentSong(song); 
-                          setIsPlaying(true); 
-                          setIsCurrentlyPlayingFromQueue(false); 
-                          if (window.innerWidth < 768) { 
-                            setIsSidebarOpen(false); 
-                            setUserClosedSidebar(true); 
-                          } 
-                        }} 
-                        className="flex-1 cursor-pointer min-w-0"
-                      >
-                        <div className="font-semibold text-sm truncate">{song.judul}</div>
-                        <div className="text-xs text-gray-400 truncate">
-                            {song.tahun} • Added {song.added}{countryName && ` • ${countryName}`}
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-bold text-sm truncate transition-colors ${
+                          currentSong?.id === song.id ? 'text-white' : 'text-gray-200 group-hover:text-white'
+                        }`}>
+                          {song.judul}
+                        </div>
+                        <div className={`text-xs truncate transition-colors flex items-center gap-1 flex-wrap ${
+                          currentSong?.id === song.id ? 'text-blue-100' : 'text-gray-400 group-hover:text-gray-300'
+                        }`}>
+                          <span>{song.tahun}</span>
+                          <span>•</span>
+                          <span>Added {song.added}</span>
+                          {song.negara && (
+                            <>
+                              <span>•</span>
+                              <span className="inline-flex items-center gap-1">
+                                🌍 {song.negara}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
+                      
                       <button 
                         onClick={(e) => { e.stopPropagation(); addToQueue(song); }} 
-                        className={`flex-shrink-0 ${queue.some(q => q.id === song.id) ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white p-2 rounded-full transition-colors`}
+                        className={`flex-shrink-0 p-2 rounded-lg transition-all transform hover:scale-110 ${
+                          queue.some(q => q.id === song.id) 
+                            ? 'bg-green-600 hover:bg-green-700 shadow-md' 
+                            : currentSong?.id === song.id
+                              ? 'bg-white text-blue-600 hover:bg-gray-100'
+                              : 'bg-gray-700 hover:bg-gray-600 text-white'
+                        }`}
+                        title={queue.some(q => q.id === song.id) ? "Sudah di antrian" : "Tambah ke antrian"}
                       >
                         <List size={16} />
                       </button>
@@ -1303,15 +1347,7 @@ export default function MusicPage() {
                   >
                     <div className="font-semibold text-sm truncate">{song.judul}</div>
                     <div className="text-xs text-gray-400 truncate">
-                      {song.tahun} • Added {song.added}
-                      {(() => {
-                        const countryPlaylist = song.playlist.find(p => {
-                          const num = parseInt(p);
-                          return num >= 9 && num <= 203;
-                        });
-                        const countryName = countryPlaylist ? getPlaylistName(countryPlaylist) : null;
-                        return countryName ? ` • ${countryName}` : '';
-                      })()}
+                      {song.tahun} • Added {song.added}{song.negara && ` • ${song.negara}`}
                     </div>
                   </div>
                   
@@ -1394,6 +1430,30 @@ export default function MusicPage() {
         input[type="range"] { height: 8px; }
         input[type="range"]::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; background: #3b82f6; border-radius: 50%; margin-top: -4px; position: relative; z-index: 10; }
         input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 8px; background: transparent; border-radius: 4px; }
+
+        @keyframes pulse-bar { 
+          0%, 100% { height: 60%; } 
+          50% { height: 100%; } 
+        }
+        .animate-pulse-bar { 
+          animation: pulse-bar 0.8s ease-in-out infinite; 
+        }
+        
+        /* Warna custom untuk bg-gray-750 */
+        .bg-gray-750 {
+          background-color: #2d3748;
+        }
+
+        /* Disable interaksi pada YouTube player */
+        #youtube-player {
+          pointer-events: none;
+        }
+
+        /* Jika ada iframe di dalam youtube-player */
+        #youtube-player iframe {
+          pointer-events: none;
+        }
+
       `}</style>
     </div>
   );
