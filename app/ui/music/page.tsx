@@ -118,6 +118,7 @@ export default function MusicPage() {
   // STATE UNTUK SORTING
   const [sortCriteria, setSortCriteria] = useState<SortCriteria>('default');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [isFilterExpanded, setIsFilterExpanded] = useState(true);
 
   // --- WAKE LOCK LOGIC ---
   const requestWakeLock = async () => {
@@ -223,7 +224,6 @@ export default function MusicPage() {
       const response = await fetch('/api/music');
       const data: Song[] = await response.json();
       
-      // Tambahkan field negara ke setiap song berdasarkan playlist
       const songsWithCountry = data.map(song => {
         const countryPlaylist = song.playlist.find(p => {
           const num = parseInt(p);
@@ -236,13 +236,8 @@ export default function MusicPage() {
       });
       
       setSongs(songsWithCountry);
-      if (initialQueue.length > 0) {
-        const songInList = songsWithCountry.find(s => s.id === initialQueue[0].id);
-        setCurrentSong(songInList || songsWithCountry[0] || null);
-        if (songInList) {
-            setIsCurrentlyPlayingFromQueue(true);
-        }
-      } else if (!currentSong && songsWithCountry.length > 0) {
+      // Hanya set lagu pertama tanpa memaksa dari queue
+      if (!currentSong && songsWithCountry.length > 0) {
         setCurrentSong(songsWithCountry[0]);
         setIsCurrentlyPlayingFromQueue(false);
       }
@@ -370,7 +365,12 @@ export default function MusicPage() {
     if (repeatMode === 'one') {
       playerRef.current?.seekTo(0);
       playerRef.current?.playVideo();
-    } else if (repeatMode === 'all' || isCurrentlyPlayingFromQueue || queue.length > 0) {
+    } else if (repeatMode === 'all') {
+      playNext();
+    } else if (isCurrentlyPlayingFromQueue && queue.length > 0) {
+      playNext();
+    } else if (!isCurrentlyPlayingFromQueue && filteredSongs.length > 0) {
+      // Auto-play lagu berikutnya dari daftar lagu
       playNext();
     } else {
       setIsPlaying(false);
@@ -731,22 +731,41 @@ export default function MusicPage() {
   const playNext = () => {
     if (!currentSong) return;
     
+    // Hanya gunakan queue jika sedang bermain dari queue DAN queue masih ada isinya
     if (isCurrentlyPlayingFromQueue && queue.length > 0) {
       const currentIndex = queue.findIndex(s => s.id === currentSong.id);
-      if (currentIndex !== -1) {
-        const nextIndex = (currentIndex + 1) % queue.length;
+      if (currentIndex !== -1 && currentIndex < queue.length - 1) {
+        // Masih ada lagu berikutnya di queue
+        const nextIndex = currentIndex + 1;
         setCurrentSong(queue[nextIndex]);
         setIsPlaying(true);
         setIsCurrentlyPlayingFromQueue(true); 
         return; 
-      } 
-      setIsCurrentlyPlayingFromQueue(false);
+      } else {
+        // Queue habis, kembali ke daftar lagu
+        setIsCurrentlyPlayingFromQueue(false);
+        // Jangan return di sini, lanjutkan ke logika daftar lagu
+      }
     }
 
+    // Gunakan daftar lagu (filtered atau shuffled)
     let playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : filteredSongs;
-    if (playQueue.length === 0) { setIsPlaying(false); return; }
+    if (playQueue.length === 0) { 
+      setIsPlaying(false); 
+      return; 
+    }
     
     const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
+    
+    // Jika lagu saat ini tidak ditemukan di playlist (mungkin karena filter berubah),
+    // mulai dari awal
+    if (currentIndex === -1) {
+      setCurrentSong(playQueue[0]);
+      setIsPlaying(true);
+      setIsCurrentlyPlayingFromQueue(false);
+      return;
+    }
+    
     const nextIndex = (currentIndex + 1) % playQueue.length;
     setCurrentSong(playQueue[nextIndex]);
     setIsPlaying(true);
@@ -756,18 +775,23 @@ export default function MusicPage() {
   const playPrevious = () => {
     if (!currentSong) return;
     
+    // Hanya gunakan queue jika sedang bermain dari queue DAN queue masih ada isinya
     if (isCurrentlyPlayingFromQueue && queue.length > 0) {
       const currentIndex = queue.findIndex(s => s.id === currentSong.id);
-      if (currentIndex !== -1) {
-        const prevIndex = currentIndex === 0 ? queue.length - 1 : currentIndex - 1;
+      if (currentIndex !== -1 && currentIndex > 0) {
+        // Masih ada lagu sebelumnya di queue
+        const prevIndex = currentIndex - 1;
         setCurrentSong(queue[prevIndex]);
         setIsPlaying(true);
         setIsCurrentlyPlayingFromQueue(true); 
         return; 
+      } else {
+        // Di awal queue, kembali ke daftar lagu
+        setIsCurrentlyPlayingFromQueue(false);
       }
-      setIsCurrentlyPlayingFromQueue(false);
     }
     
+    // Gunakan daftar lagu (filtered atau shuffled)
     let playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : filteredSongs;
     if (playQueue.length === 0) { setIsPlaying(false); return; }
     
@@ -882,9 +906,13 @@ export default function MusicPage() {
 
       {/* Sidebar */}
       <div className={`${isSidebarOpen ? 'translate-x-0 w-full md:w-80' : '-translate-x-full md:w-0'} fixed md:relative h-full inset-y-0 md:inset-auto transition-all duration-300 bg-gray-800 overflow-y-auto z-40`}>
-        <div className="p-4 h-full">
-          <button onClick={() => { setIsSidebarOpen(false); setUserClosedSidebar(true); }} className="md:hidden absolute top-4 right-4 p-2 hover:bg-gray-700 rounded"><X size={24} /></button>
-          <h2 className="text-xl font-bold mb-4">🎵 Music Playlist</h2>
+        <div className="h-full flex flex-col">
+          {/* Sticky Header */}
+          <div className="flex-shrink-0 sticky top-0 bg-gray-800 z-10 p-4 pb-2 border-b border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">🎵 Music Playlist</h2>
+              <button onClick={() => { setIsSidebarOpen(false); setUserClosedSidebar(true); }} className="md:hidden p-2 hover:bg-gray-700 rounded"><X size={24} /></button>
+            </div>
           
           <div className="mb-4 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -892,110 +920,133 @@ export default function MusicPage() {
             {searchQuery && <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"><X size={18} /></button>}
           </div>
 
-          <div className="mb-4 space-y-3">
-          {/* Header dengan tombol clear */}
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-semibold text-gray-400">Filter Playlist</label>
-            {hasActiveFilters() && (
+          <div className="mb-4">
+            {/* Header dengan tombol minimize dan clear */}
+            <div className="flex items-center justify-between mb-3">
               <button 
-                onClick={clearAllFilters}
-                className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
+                onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                className="flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors"
               >
-                <X size={12} /> Clear All
+                {isFilterExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                Filter Playlist
+                {hasActiveFilters() && !isFilterExpanded && (
+                  <span className="ml-1 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
+                    {[
+                      selectedPlaylists.likedBy,
+                      selectedPlaylists.nada,
+                      selectedPlaylists.mood,
+                      selectedPlaylists.jenis
+                    ].filter(Boolean).length}
+                  </span>
+                )}
               </button>
-            )}
-          </div>
-
-          {/* Grup Liked by - DIPINDAHKAN KE ATAS */}
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Liked by</label>
-            <div className="flex gap-2 flex-wrap">
-              {playlistGroups.likedBy.map(pl => (
+              {hasActiveFilters() && (
                 <button 
-                  key={pl.id} 
-                  onClick={() => togglePlaylistSelection('likedBy', pl.id)} 
-                  className={`px-3 py-1 rounded-full text-xs transition-colors ${
-                    selectedPlaylists.likedBy === pl.id 
-                      ? 'bg-pink-600 text-white' 
-                      : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                  }`}
+                  onClick={clearAllFilters}
+                  className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
                 >
-                  {pl.name}
+                  <X size={12} /> Clear
                 </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Grup Nada */}
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Nada</label>
-              <div className="flex gap-2 flex-wrap">
-                {playlistGroups.nada.map(pl => (
-                  <button 
-                    key={pl.id} 
-                    onClick={() => togglePlaylistSelection('nada', pl.id)} 
-                    className={`px-3 py-1 rounded-full text-xs transition-colors ${
-                      selectedPlaylists.nada === pl.id 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                    }`}
-                  >
-                    {pl.name}
-                  </button>
-                ))}
-              </div>
+              )}
             </div>
 
-            {/* Grup Mood */}
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">Mood</label>
-              <div className="flex gap-2 flex-wrap">
-                {playlistGroups.mood.map(pl => (
-                  <button 
-                    key={pl.id} 
-                    onClick={() => togglePlaylistSelection('mood', pl.id)} 
-                    className={`px-3 py-1 rounded-full text-xs transition-colors ${
-                      selectedPlaylists.mood === pl.id 
-                        ? 'bg-green-600 text-white' 
-                        : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                    }`}
-                  >
-                    {pl.name}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Konten filter - hanya tampil jika expanded */}
+            {isFilterExpanded && (
+              <div className="space-y-3">
 
-            {/* Grup Jenis */}
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">Jenis</label>
-              <div className="flex gap-2 flex-wrap">
-                {playlistGroups.jenis.map(pl => (
-                  <button 
-                    key={pl.id} 
-                    onClick={() => togglePlaylistSelection('jenis', pl.id)} 
-                    className={`px-3 py-1 rounded-full text-xs transition-colors ${
-                      selectedPlaylists.jenis === pl.id 
-                        ? 'bg-purple-600 text-white' 
-                        : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                    }`}
-                  >
-                    {pl.name}
-                  </button>
-                ))}
-              </div>
-            </div>
+                {/* Grup Liked by - DIPINDAHKAN KE ATAS */}
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Liked by</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {playlistGroups.likedBy.map(pl => (
+                      <button 
+                        key={pl.id} 
+                        onClick={() => togglePlaylistSelection('likedBy', pl.id)} 
+                        className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                          selectedPlaylists.likedBy === pl.id 
+                            ? 'bg-pink-600 text-white' 
+                            : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                        }`}
+                      >
+                        {pl.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            {/* Info filter aktif */}
-            {hasActiveFilters() && (
-              <div className="text-xs text-gray-400 bg-gray-700 px-3 py-2 rounded">
-                Filter aktif: {[
-                  selectedPlaylists.likedBy && playlistGroups.likedBy.find(p => p.id === selectedPlaylists.likedBy)?.name,
-                  selectedPlaylists.nada && playlistGroups.nada.find(p => p.id === selectedPlaylists.nada)?.name,
-                  selectedPlaylists.mood && playlistGroups.mood.find(p => p.id === selectedPlaylists.mood)?.name,
-                  selectedPlaylists.jenis && playlistGroups.jenis.find(p => p.id === selectedPlaylists.jenis)?.name,
-                ].filter(Boolean).join(' + ')}
-              </div>
+                {/* Grup Nada */}
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Nada</label>
+                    <div className="flex gap-2 flex-wrap">
+                      {playlistGroups.nada.map(pl => (
+                        <button 
+                          key={pl.id} 
+                          onClick={() => togglePlaylistSelection('nada', pl.id)} 
+                          className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                            selectedPlaylists.nada === pl.id 
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                          }`}
+                        >
+                          {pl.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                
+
+                {/* Grup Mood */}
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Mood</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {playlistGroups.mood.map(pl => (
+                      <button 
+                        key={pl.id} 
+                        onClick={() => togglePlaylistSelection('mood', pl.id)} 
+                        className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                          selectedPlaylists.mood === pl.id 
+                            ? 'bg-green-600 text-white' 
+                            : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                        }`}
+                      >
+                        {pl.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Grup Jenis */}
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Jenis</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {playlistGroups.jenis.map(pl => (
+                      <button 
+                        key={pl.id} 
+                        onClick={() => togglePlaylistSelection('jenis', pl.id)} 
+                        className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                          selectedPlaylists.jenis === pl.id 
+                            ? 'bg-purple-600 text-white' 
+                            : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                        }`}
+                      >
+                        {pl.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Info filter aktif */}
+                {hasActiveFilters() && (
+                  <div className="text-xs text-gray-400 bg-gray-700 px-3 py-2 rounded">
+                    Filter aktif: {[
+                      selectedPlaylists.likedBy && playlistGroups.likedBy.find(p => p.id === selectedPlaylists.likedBy)?.name,
+                      selectedPlaylists.nada && playlistGroups.nada.find(p => p.id === selectedPlaylists.nada)?.name,
+                      selectedPlaylists.mood && playlistGroups.mood.find(p => p.id === selectedPlaylists.mood)?.name,
+                      selectedPlaylists.jenis && playlistGroups.jenis.find(p => p.id === selectedPlaylists.jenis)?.name,
+                    ].filter(Boolean).join(' + ')}
+                  </div>
+                )}
+              </div>  
             )}
           </div>
 
@@ -1030,48 +1081,56 @@ export default function MusicPage() {
               </div>
             )}
           </div>
+        </div>
 
-          <div className="space-y-2 pb-4"> 
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <div className="space-y-2"> 
             {filteredSongs.length === 0 ? (
-              <div className="text-center text-gray-400 py-8"><Music size={48} className="mx-auto mb-4 opacity-50" /><p className="text-sm">Tidak ada lagu</p></div>
-            ) : (
-              filteredSongs.map((song) => {
-                // Cari nama negara dari playlist 9-203
-                const countryPlaylist = song.playlist.find(p => {
-                  const num = parseInt(p);
-                  return num >= 9 && num <= 203;
-                });
-                const countryName = countryPlaylist ? getPlaylistName(countryPlaylist) : null;
+            <div className="text-center text-gray-400 py-8"><Music size={48} className="mx-auto mb-4 opacity-50" /><p className="text-sm">Tidak ada lagu</p></div>
+              ) : (
+                filteredSongs.map((song, index) => {
+                  // Cari nama negara dari playlist 9-203
+                  const countryPlaylist = song.playlist.find(p => {
+                    const num = parseInt(p);
+                    return num >= 9 && num <= 203;
+                  });
+                  const countryName = countryPlaylist ? getPlaylistName(countryPlaylist) : null;
 
-                return (
-                  <div key={song.id} className={`p-3 rounded flex items-center justify-between gap-3 hover:bg-gray-700 ${currentSong?.id === song.id ? 'bg-gray-700 border-l-4 border-blue-500' : ''}`}>
-                    <div 
-                      onClick={() => { 
-                        setCurrentSong(song); 
-                        setIsPlaying(true); 
-                        setIsCurrentlyPlayingFromQueue(false); 
-                        if (window.innerWidth < 768) { 
-                          setIsSidebarOpen(false); 
-                          setUserClosedSidebar(true); 
-                        } 
-                      }} 
-                      className="flex-1 cursor-pointer min-w-0"
-                    >
-                      <div className="font-semibold text-sm truncate">{song.judul}</div>
-                      <div className="text-xs text-gray-400 truncate">
-                          {song.tahun} • Added {song.added}{countryName && ` • ${countryName}`}
+                  return (
+                    <div key={song.id} className={`p-3 rounded flex items-center gap-3 hover:bg-gray-700 ${currentSong?.id === song.id ? 'bg-gray-700 border-l-4 border-blue-500' : ''}`}>
+                      {/* Nomor urut */}
+                      <div className="flex-shrink-0 w-8 text-center text-sm text-gray-400 font-medium">
+                        {index + 1}
                       </div>
+                      <div
+                        onClick={() => { 
+                          setCurrentSong(song); 
+                          setIsPlaying(true); 
+                          setIsCurrentlyPlayingFromQueue(false); 
+                          if (window.innerWidth < 768) { 
+                            setIsSidebarOpen(false); 
+                            setUserClosedSidebar(true); 
+                          } 
+                        }} 
+                        className="flex-1 cursor-pointer min-w-0"
+                      >
+                        <div className="font-semibold text-sm truncate">{song.judul}</div>
+                        <div className="text-xs text-gray-400 truncate">
+                            {song.tahun} • Added {song.added}{countryName && ` • ${countryName}`}
+                        </div>
+                      </div>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); addToQueue(song); }} 
+                        className={`flex-shrink-0 ${queue.some(q => q.id === song.id) ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white p-2 rounded-full transition-colors`}
+                      >
+                        <List size={16} />
+                      </button>
                     </div>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); addToQueue(song); }} 
-                      className={`flex-shrink-0 ${queue.some(q => q.id === song.id) ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white p-2 rounded-full transition-colors`}
-                    >
-                      <List size={16} />
-                    </button>
-                  </div>
-                );
-              })
-            )}
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -1211,15 +1270,22 @@ export default function MusicPage() {
         <>
           <div className="md:hidden fixed inset-0 bg-black bg-opacity-30 z-40 backdrop-blur-sm" onClick={() => setShowQueue(false)} />
           {/* Menggunakan h-auto max-h-[70dvh] untuk mobile agar responsif terhadap keyboard/browser bar */}
-          <div className="fixed md:relative bottom-0 md:bottom-auto right-0 md:right-auto w-full md:w-80 h-[90dvh] md:h-full bg-gray-800 p-4 overflow-y-auto border-t md:border-t-0 md:border-l border-gray-700 z-50 rounded-t-2xl md:rounded-none">
-            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+          <div className="fixed md:relative bottom-0 md:bottom-auto right-0 md:right-auto w-full md:w-80 h-[90dvh] md:h-full bg-gray-800 border-t md:border-t-0 md:border-l border-gray-700 z-50 rounded-t-2xl md:rounded-none flex flex-col">
+            {/* Sticky Header */}
+            <div className="flex-shrink-0 sticky top-0 bg-gray-800 z-10 p-4 pb-2 border-b border-gray-700 rounded-t-2xl md:rounded-none">
+              <div className="flex items-center justify-between">
               <h2 className="text-lg md:text-xl font-bold">📋 Antrian ({queue.length})</h2>
               <div className="flex gap-2">
                 {queue.length > 0 && <button onClick={clearQueue} className="text-red-500 text-sm hover:bg-gray-700 p-1 rounded">🗑️ Kosongkan</button>}
                 <button onClick={() => setShowQueue(false)} className="md:hidden text-gray-400 hover:bg-gray-700 p-1 rounded"><X size={20} /></button>
               </div>
+
+              </div>
             </div>
-            <div className="space-y-2">
+            
+            {/* Scrollable Queue Content */}
+            <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2">
+              <div className="space-y-2">
               {queue.map((song, index) => (
                 <div 
                   key={`${song.id}-${index}`} 
@@ -1280,7 +1346,8 @@ export default function MusicPage() {
               ))}
             </div>
           </div>
-        </>
+        </div>
+      </>
       )}
 
       {/* GLOBAL STYLES (Penyesuaian Viewport untuk Mobile) */}
