@@ -84,6 +84,7 @@ export default function MusicPage() {
   const [queue, setQueue] = useState<Song[]>([]); 
   const [isShuffled, setIsShuffled] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off');
+  const repeatModeRef = useRef<'off' | 'all' | 'one'>('off'); // Tambah ini
   const [shuffledOrder, setShuffledOrder] = useState<Song[]>([]);
   const [selectedPlaylists, setSelectedPlaylists] = useState<{
     nada: string | null;
@@ -244,10 +245,10 @@ export default function MusicPage() {
       
       setSongs(songsWithCountry);
       // Hanya set lagu pertama tanpa memaksa dari queue
-      if (!currentSong && songsWithCountry.length > 0) {
-        setCurrentSong(songsWithCountry[0]);
-        setIsCurrentlyPlayingFromQueue(false);
-      }
+      // if (!currentSong && songsWithCountry.length > 0) {
+      //   setCurrentSong(songsWithCountry[0]);
+      //   setIsCurrentlyPlayingFromQueue(false);
+      // }
     } catch (error) {
       console.error('Error fetching songs:', error);
     }
@@ -370,16 +371,60 @@ export default function MusicPage() {
   };
 
   const handleVideoEnded = () => {
-    if (repeatMode === 'one') {
-      playerRef.current?.seekTo(0);
-      playerRef.current?.playVideo();
-    } else if (repeatMode === 'all') {
+    const currentRepeatMode = repeatModeRef.current; // Gunakan ref, bukan state
+    console.log('Video ended. Repeat mode from ref:', currentRepeatMode); // Debug log
+    
+    if (currentRepeatMode === 'one') {
+      // Repeat lagu saat ini terus menerus
+      console.log('Repeating current song'); // Debug log
+      if (playerRef.current && isPlayerReady) {
+        playerRef.current.seekTo(0);
+        playerRef.current.playVideo();
+        setIsPlaying(true);
+      }
+      return; // PENTING: Harus return di sini!
+    } 
+    
+    if (currentRepeatMode === 'all') {
+      // Mode 'all': putar lagu berikutnya, loop ke awal jika sudah di akhir
+      console.log('Repeat all: playing next'); // Debug log
       playNext();
-    } else if (isCurrentlyPlayingFromQueue && queue.length > 0) {
-      playNext();
-    } else if (!isCurrentlyPlayingFromQueue && filteredSongs.length > 0) {
-      // Auto-play lagu berikutnya dari daftar lagu
-      playNext();
+      return; // PENTING: Harus return di sini!
+    }
+    
+    // Mode 'off': cek apakah masih ada lagu berikutnya
+    console.log('Repeat off mode'); // Debug log
+    
+    if (!currentSong) {
+      setIsPlaying(false);
+      return;
+    }
+    
+    // Jika dari queue, cek apakah masih ada lagu di queue
+    if (isCurrentlyPlayingFromQueue && queue.length > 0) {
+      const currentIndex = queue.findIndex(s => s.id === currentSong.id);
+      if (currentIndex !== -1 && currentIndex < queue.length - 1) {
+        // Masih ada lagu berikutnya di queue
+        playNext();
+      } else {
+        // Queue habis, stop
+        setIsPlaying(false);
+        setIsCurrentlyPlayingFromQueue(false);
+      }
+      return; // PENTING: Tambahkan return di sini!
+    }
+    
+    // Jika dari playlist, cek apakah masih ada lagu berikutnya
+    const playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : filteredSongs;
+    if (playQueue.length > 0) {
+      const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
+      if (currentIndex !== -1 && currentIndex < playQueue.length - 1) {
+        // Masih ada lagu berikutnya di playlist
+        playNext();
+      } else {
+        // Sudah di akhir playlist, stop
+        setIsPlaying(false);
+      }
     } else {
       setIsPlaying(false);
     }
@@ -811,6 +856,17 @@ export default function MusicPage() {
     setIsCurrentlyPlayingFromQueue(false);
   };
 
+  // Tambahkan useEffect baru setelah useEffect yang ada
+  useEffect(() => {
+    // Auto re-shuffle ketika filteredSongs berubah dan shuffle aktif
+    if (isShuffled && filteredSongs.length > 0) {
+      const playQueue = isCurrentlyPlayingFromQueue && queue.length > 0 ? queue : filteredSongs;
+      let songsToShuffle = [...playQueue.filter(s => s.id !== currentSong?.id)];
+      const shuffled = songsToShuffle.sort(() => Math.random() - 0.5);
+      setShuffledOrder(currentSong ? [currentSong, ...shuffled] : shuffled);
+    }
+  }, [filteredSongs, isShuffled]); // Trigger ketika filtered songs atau shuffle status berubah
+
   const toggleShuffle = () => {
     if (!isShuffled) {
       setRepeatMode('off');
@@ -829,13 +885,23 @@ export default function MusicPage() {
 
   const toggleRepeat = () => {
     const modes: ('off' | 'all' | 'one')[] = ['off', 'all', 'one'];
-    const newMode = modes[(modes.indexOf(repeatMode) + 1) % modes.length];
+    const currentIndex = modes.indexOf(repeatMode);
+    const newMode = modes[(currentIndex + 1) % modes.length];
+    
+    // Clear shuffle jika repeat one/all aktif
     if (newMode !== 'off' && isShuffled) {
       setIsShuffled(false);
       setShuffledOrder([]);
     }
+    
     setRepeatMode(newMode);
-    const msgs = { off: '🔁 Repeat dimatikan', all: '🔁 Repeat semua', one: '🔁 Repeat lagu ini' };
+    repeatModeRef.current = newMode; // Update ref juga
+    
+    const msgs = { 
+      off: '🔁 Repeat dimatikan', 
+      all: '🔁 Repeat semua lagu', 
+      one: '🔁 Repeat lagu ini saja' 
+    };
     showNotification(msgs[newMode]);
   };
 
@@ -1108,8 +1174,20 @@ export default function MusicPage() {
                           : 'bg-gray-750 hover:scale-[1.01]'
                       }`}
                       onClick={() => { 
-                        setCurrentSong(song); 
-                        setIsPlaying(true); 
+                        // Force refresh jika klik lagu yang sama
+                        if (currentSong?.id === song.id) {
+                          setIsPlaying(false);
+                          setTimeout(() => {
+                            setIsPlaying(true);
+                            if (playerRef.current && isPlayerReady) {
+                              playerRef.current.seekTo(0);
+                              playerRef.current.playVideo();
+                            }
+                          }, 100);
+                        } else {
+                          setCurrentSong(song); 
+                          setIsPlaying(true); 
+                        }
                         setIsCurrentlyPlayingFromQueue(false); 
                         if (window.innerWidth < 768) { 
                           setIsSidebarOpen(false); 
@@ -1158,7 +1236,18 @@ export default function MusicPage() {
                       </div>
                       
                       <button 
-                        onClick={(e) => { e.stopPropagation(); addToQueue(song); }} 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          // Toggle: jika sudah di queue, hapus. Jika belum, tambah.
+                          const isInQueue = queue.some(q => q.id === song.id);
+                          if (isInQueue) {
+                            const queueIndex = queue.findIndex(q => q.id === song.id);
+                            removeFromQueue(queueIndex);
+                            showNotification(`❌ "${song.judul}" dihapus dari antrian`);
+                          } else {
+                            addToQueue(song);
+                          }
+                        }} 
                         className={`flex-shrink-0 p-2 rounded-lg transition-all transform hover:scale-110 ${
                           queue.some(q => q.id === song.id) 
                             ? 'bg-green-600 hover:bg-green-700 shadow-md' 
@@ -1166,7 +1255,7 @@ export default function MusicPage() {
                               ? 'bg-white text-blue-600 hover:bg-gray-100'
                               : 'bg-gray-700 hover:bg-gray-600 text-white'
                         }`}
-                        title={queue.some(q => q.id === song.id) ? "Sudah di antrian" : "Tambah ke antrian"}
+                        title={queue.some(q => q.id === song.id) ? "Hapus dari antrian" : "Tambah ke antrian"}
                       >
                         <List size={16} />
                       </button>
