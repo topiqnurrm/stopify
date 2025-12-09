@@ -875,7 +875,35 @@ export default function MusicPage() {
     setTimeout(() => setNotification(''), 3000);
   };
 
-  const togglePlay = () => setIsPlaying(!isPlaying);
+  const togglePlay = () => {
+    // Jika saat ini tidak playing dan tidak ada currentSong atau sudah di akhir playlist
+    if (!isPlaying && currentSong) {
+      // Cek apakah lagu sudah selesai (di akhir playlist)
+      const playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : activePlaylistSongs;
+      const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
+      const isAtEnd = currentIndex === playQueue.length - 1;
+      
+      // Jika di akhir playlist dan repeat off, mulai dari awal
+      if (isAtEnd && repeatMode === 'off' && playQueue.length > 0) {
+        setCurrentSong(playQueue[0]);
+        setIsPlaying(true);
+        return;
+      }
+    }
+    
+    // Jika tidak ada currentSong sama sekali, mulai dari lagu pertama
+    if (!isPlaying && !currentSong) {
+      const playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : activePlaylistSongs;
+      if (playQueue.length > 0) {
+        setCurrentSong(playQueue[0]);
+        setIsPlaying(true);
+        return;
+      }
+    }
+    
+    // Toggle biasa
+    setIsPlaying(!isPlaying);
+  };
 
   const playNext = () => {
     if (!currentSong) return;
@@ -1530,10 +1558,21 @@ export default function MusicPage() {
                           }, 100);
                         }
                         
-                        // Jika klik lagu yang sama, toggle play/pause saja
+                        // PERBAIKAN: Cek apakah lagu sudah selesai (isPlaying false DI lagu yang sama)
                         if (currentSong?.id === song.id) {
-                          setIsPlaying(!isPlaying);
+                          // Jika lagu sama tapi sudah tidak playing, paksa play (restart)
+                          if (!isPlaying) {
+                            // Restart lagu dari awal jika sudah selesai
+                            if (playerRef.current && isPlayerReady) {
+                              playerRef.current.seekTo(0);
+                            }
+                            setIsPlaying(true);
+                          } else {
+                            // Jika sedang playing, toggle pause
+                            setIsPlaying(!isPlaying);
+                          }
                         } else {
+                          // Lagu berbeda, ganti dan play
                           setCurrentSong(song); 
                           setIsPlaying(true); 
                         }
@@ -1822,12 +1861,21 @@ export default function MusicPage() {
                   <div 
                     className="flex-1 cursor-pointer min-w-0" 
                     onClick={() => { 
-                      // REVISI: Jika klik lagu yang sama di antrian, toggle play/pause
+                      // PERBAIKAN: Cek apakah lagu sudah selesai (isPlaying false DI lagu yang sama)
                       if (currentSong?.id === song.id) {
-                        // Toggle play/pause tanpa restart
-                        setIsPlaying(!isPlaying);
-                        // TAMBAHAN: Set flag antrian aktif
-                        setIsCurrentlyPlayingFromQueue(true);
+                        // Jika lagu sama tapi sudah tidak playing, paksa play (restart)
+                        if (!isPlaying) {
+                          // Restart lagu dari awal jika sudah selesai
+                          if (playerRef.current && isPlayerReady) {
+                            playerRef.current.seekTo(0);
+                          }
+                          setIsPlaying(true);
+                          setIsCurrentlyPlayingFromQueue(true);
+                        } else {
+                          // Jika sedang playing, toggle pause
+                          setIsPlaying(!isPlaying);
+                          setIsCurrentlyPlayingFromQueue(true);
+                        }
                       } else {
                         // Lagu berbeda, ganti lagu dan play
                         setCurrentSong(song); 
