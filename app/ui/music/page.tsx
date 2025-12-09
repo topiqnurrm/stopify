@@ -907,10 +907,20 @@ export default function MusicPage() {
 
   // TAMBAHKAN USEEFFECT BARU INI setelah useEffect auto re-shuffle:
 
-
   const toggleShuffle = () => {
+    // Cegah shuffle saat memutar dari queue
+    if (isCurrentlyPlayingFromQueue) {
+      showNotification('⚠️ Shuffle tidak tersedia saat memutar antrian');
+      return;
+    }
+    
+    // REVISI: Hanya cegah shuffle saat repeat ONE aktif (bukan repeat all)
+    if (repeatMode === 'one') {
+      showNotification('⚠️ Matikan Repeat One terlebih dahulu untuk mengaktifkan Shuffle');
+      return;
+    }
+    
     if (!isShuffled) {
-      // HAPUS: setRepeatMode('off'); - Biarkan repeat tetap aktif
       const playQueue = isCurrentlyPlayingFromQueue && queue.length > 0 ? queue : filteredSongs; 
       let songsToShuffle = [...playQueue.filter(s => s.id !== currentSong?.id)];
       const shuffled = songsToShuffle.sort(() => Math.random() - 0.5);
@@ -925,13 +935,49 @@ export default function MusicPage() {
   };
 
   const toggleRepeat = () => {
+    // Cegah repeat all/one saat memutar dari queue
+    if (isCurrentlyPlayingFromQueue && (repeatMode === 'off' || repeatMode === 'one')) {
+      // Hanya izinkan repeat 'all' untuk queue
+      if (repeatMode === 'off') {
+        repeatModeRef.current = 'all';
+        setRepeatMode('all');
+        showNotification('🔁 Repeat semua antrian');
+      } else {
+        // Dari 'one' ke 'all' diperbolehkan
+        repeatModeRef.current = 'all';
+        setRepeatMode('all');
+        showNotification('🔁 Repeat semua antrian');
+      }
+      return;
+    }
+    
+    // Cegah repeat one saat dari queue
+    if (isCurrentlyPlayingFromQueue && repeatMode === 'all') {
+      showNotification('⚠️ Repeat One tidak tersedia untuk antrian');
+      // Matikan repeat
+      repeatModeRef.current = 'off';
+      setRepeatMode('off');
+      return;
+    }
+    
+    // LOGIKA BARU: Jika shuffle aktif DAN repeat all aktif, langsung ke repeat one + matikan shuffle
+    if (isShuffled && repeatMode === 'all') {
+      // Matikan shuffle
+      setShuffledOrder([]);
+      setIsShuffled(false);
+      
+      // Aktifkan repeat one
+      repeatModeRef.current = 'one';
+      setRepeatMode('one');
+      
+      showNotification('🔁 Repeat One aktif • Shuffle dimatikan');
+      return;
+    }
+    
     const modes: ('off' | 'all' | 'one')[] = ['off', 'all', 'one'];
     const currentIndex = modes.indexOf(repeatMode);
     const newMode = modes[(currentIndex + 1) % modes.length];
     
-    // HAPUS logika clear shuffle - Biarkan shuffle tetap aktif
-    
-    // PENTING: Update ref DULU sebelum state
     repeatModeRef.current = newMode;
     setRepeatMode(newMode);
     
@@ -1038,6 +1084,25 @@ export default function MusicPage() {
 
     return sortSongs(filtered, sortCriteria);
   }, [songs, activePlaylistFilter, sortCriteria]);
+
+  // Re-shuffle dan maintain repeat saat berganti playlist
+  useEffect(() => {
+    // Jika tidak ada active playlist filter atau sedang dari queue, skip
+    if (!activePlaylistFilter || isCurrentlyPlayingFromQueue) return;
+    
+    // Re-shuffle dengan lagu dari playlist baru jika shuffle aktif
+    if (isShuffled && activePlaylistSongs.length > 0) {
+      let songsToShuffle = [...activePlaylistSongs.filter(s => s.id !== currentSong?.id)];
+      const shuffled = songsToShuffle.sort(() => Math.random() - 0.5);
+      setShuffledOrder(currentSong ? [currentSong, ...shuffled] : shuffled);
+      showNotification('🔀 Shuffle diperbarui untuk playlist baru');
+    }
+    
+    // Repeat mode tetap aktif, hanya notifikasi
+    if (repeatMode !== 'off') {
+      showNotification(`🔁 Repeat ${repeatMode === 'all' ? 'All' : 'One'} tetap aktif`);
+    }
+  }, [activePlaylistFilter]); // Trigger saat activePlaylistFilter berubah
 
   if (!mounted) return <div className="h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>;
 
@@ -1313,14 +1378,22 @@ export default function MusicPage() {
                             })()
                       }`}
                       onClick={() => { 
-                        // PENTING: Set active playlist saat klik lagu
-                        setActivePlaylistFilter({...selectedPlaylists});
+                        // Deteksi apakah playlist berubah
+                        const isPlaylistChanged = 
+                          activePlaylistFilter?.nada !== selectedPlaylists.nada ||
+                          activePlaylistFilter?.mood !== selectedPlaylists.mood ||
+                          activePlaylistFilter?.jenis !== selectedPlaylists.jenis ||
+                          activePlaylistFilter?.likedBy !== selectedPlaylists.likedBy;
                         
-                        // TAMBAHAN: Clear search dan scroll ke lagu
+                        // Set active playlist hanya jika berbeda
+                        if (isPlaylistChanged) {
+                          setActivePlaylistFilter({...selectedPlaylists});
+                        }
+                        
+                        // Clear search dan scroll ke lagu
                         if (searchQuery !== '') {
                           setSearchQuery('');
                           
-                          // Scroll ke lagu setelah search di-clear
                           setTimeout(() => {
                             const songElement = songListRef.current[song.id];
                             if (songElement) {
@@ -1329,28 +1402,22 @@ export default function MusicPage() {
                                 block: 'center' 
                               });
                             }
-                          }, 100); // Delay untuk memastikan list sudah ter-render ulang
+                          }, 100);
                         }
                         
-                        // Force refresh jika klik lagu yang sama
+                        // Jika klik lagu yang sama, toggle play/pause saja
                         if (currentSong?.id === song.id) {
-                          setIsPlaying(false);
-                          setTimeout(() => {
-                            setIsPlaying(true);
-                            if (playerRef.current && isPlayerReady) {
-                              playerRef.current.seekTo(0);
-                              playerRef.current.playVideo();
-                            }
-                          }, 100);
+                          setIsPlaying(!isPlaying);
                         } else {
                           setCurrentSong(song); 
                           setIsPlaying(true); 
                         }
-                        setIsCurrentlyPlayingFromQueue(false); 
+                        setIsCurrentlyPlayingFromQueue(false);
+                        
                         if (window.innerWidth < 768) { 
                           setIsSidebarOpen(false); 
                           setUserClosedSidebar(true); 
-                        } 
+                        }
                       }}
                     >
                       {/* Nomor urut dengan animasi */}
@@ -1531,11 +1598,49 @@ export default function MusicPage() {
                 
                 {/* KONTROL UTAMA PLAYBACK */}
                 <div className="flex items-center justify-center gap-3 md:gap-6 order-1 md:order-2">
-                    <button onClick={toggleShuffle} className={`p-1 md:p-2 rounded hover:bg-gray-700 ${isShuffled ? 'text-blue-500' : ''}`}><Shuffle size={16} className="md:w-5 md:h-5" /></button>
-                    <button onClick={playPrevious} className="p-1 md:p-2 rounded hover:bg-gray-700"><SkipBack size={20} className="md:w-7 md:h-7" /></button>
-                    <button onClick={togglePlay} className="p-3 md:p-4 bg-blue-600 rounded-full hover:bg-blue-700 hover:scale-105 transition-transform">{isPlaying ? <Pause size={20} className="md:w-8 md:h-8" /> : <Play size={20} className="md:w-8 md:h-8" />}</button>
-                    <button onClick={playNext} className="p-1 md:p-2 rounded hover:bg-gray-700"><SkipForward size={20} className="md:w-7 md:h-7" /></button>
-                    <button onClick={toggleRepeat} className={`p-1 md:p-2 rounded hover:bg-gray-700 relative ${repeatMode !== 'off' ? 'text-blue-500' : ''}`}><Repeat size={16} className="md:w-5 md:h-5" />{repeatMode === 'one' && <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[8px] md:text-[10px] rounded-full w-3 h-3 md:w-4 md:h-4 flex items-center justify-center">1</span>}</button>
+                    <button 
+                      onClick={toggleShuffle} 
+                      disabled={isCurrentlyPlayingFromQueue}
+                      className={`p-1 md:p-2 rounded hover:bg-gray-700 transition-opacity ${
+                        isCurrentlyPlayingFromQueue 
+                          ? 'opacity-30 cursor-not-allowed' 
+                          : isShuffled 
+                            ? 'text-blue-500' 
+                            : ''
+                      }`}
+                    >
+                      <Shuffle size={16} className="md:w-5 md:h-5" />
+                    </button>
+                    
+                    <button onClick={playPrevious} className="p-1 md:p-2 rounded hover:bg-gray-700">
+                      <SkipBack size={20} className="md:w-7 md:h-7" />
+                    </button>
+                    
+                    <button onClick={togglePlay} className="p-3 md:p-4 bg-blue-600 rounded-full hover:bg-blue-700 hover:scale-105 transition-transform">
+                      {isPlaying ? <Pause size={20} className="md:w-8 md:h-8" /> : <Play size={20} className="md:w-8 md:h-8" />}
+                    </button>
+                    
+                    <button onClick={playNext} className="p-1 md:p-2 rounded hover:bg-gray-700">
+                      <SkipForward size={20} className="md:w-7 md:h-7" />
+                    </button>
+                    
+                    <button 
+                      onClick={toggleRepeat} 
+                      className={`p-1 md:p-2 rounded hover:bg-gray-700 relative transition-opacity ${
+                        repeatMode !== 'off' ? 'text-blue-500' : ''
+                      } ${
+                        isCurrentlyPlayingFromQueue && repeatMode === 'off' 
+                          ? 'opacity-50' 
+                          : ''
+                      }`}
+                    >
+                      <Repeat size={16} className="md:w-5 md:h-5" />
+                      {repeatMode === 'one' && (
+                        <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[8px] md:text-[10px] rounded-full w-3 h-3 md:w-4 md:h-4 flex items-center justify-center">
+                          1
+                        </span>
+                      )}
+                    </button>
                 </div>
                 
                 <div className="hidden md:block w-40 order-3"> {/* Spacer agar kontrol di tengah */}</div>
@@ -1592,9 +1697,18 @@ export default function MusicPage() {
                   <div 
                     className="flex-1 cursor-pointer min-w-0" 
                     onClick={() => { 
-                      setCurrentSong(song); 
-                      setIsPlaying(true); 
-                      setIsCurrentlyPlayingFromQueue(true); 
+                      // REVISI: Jika klik lagu yang sama di antrian, toggle play/pause
+                      if (currentSong?.id === song.id) {
+                        // Toggle play/pause tanpa restart
+                        setIsPlaying(!isPlaying);
+                        // TAMBAHAN: Set flag antrian aktif
+                        setIsCurrentlyPlayingFromQueue(true);
+                      } else {
+                        // Lagu berbeda, ganti lagu dan play
+                        setCurrentSong(song); 
+                        setIsPlaying(true); 
+                        setIsCurrentlyPlayingFromQueue(true); 
+                      }
                     }}
                   >
                     <div className="font-semibold text-sm truncate">{song.judul}</div>
