@@ -147,6 +147,11 @@ export default function MusicPage() {
       }
   };
 
+  // Sync repeatModeRef dengan repeatMode state
+  useEffect(() => {
+    repeatModeRef.current = repeatMode;
+  }, [repeatMode]);
+
   useEffect(() => {
       if (isPlaying) {
           requestWakeLock();
@@ -299,6 +304,18 @@ export default function MusicPage() {
             event.target.setVolume(volume);
             
             setDuration(event.target.getDuration()); 
+            
+            // TAMBAHAN: Auto-play jika isPlaying true
+            if (isPlaying) {
+              setTimeout(() => {
+                try {
+                  event.target.playVideo();
+                } catch (e) {
+                  console.error('Auto-play error:', e);
+                }
+              }, 200);
+            }
+            
             if (timeUpdateIntervalRef.current) {
                 window.clearInterval(timeUpdateIntervalRef.current);
             }
@@ -358,7 +375,14 @@ export default function MusicPage() {
     
     try {
       if (isPlaying) {
-        playerRef.current.playVideo();
+        // Tambahkan timeout kecil untuk memastikan player siap
+        const playTimeout = setTimeout(() => {
+          if (playerRef.current && typeof playerRef.current.playVideo === 'function') {
+            playerRef.current.playVideo();
+          }
+        }, 100);
+        
+        return () => clearTimeout(playTimeout);
       } else {
         playerRef.current.pauseVideo();
       }
@@ -377,13 +401,19 @@ export default function MusicPage() {
     if (currentRepeatMode === 'one') {
       // Repeat lagu saat ini terus menerus
       console.log('Repeating current song'); // Debug log
-      if (playerRef.current && isPlayerReady) {
+      // PERBAIKAN: Hapus pengecekan isPlayerReady karena player sudah pasti ready saat video ended
+      if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
         playerRef.current.seekTo(0);
-        playerRef.current.playVideo();
-        setIsPlaying(true);
+        // Tambahkan delay sebelum play untuk memastikan seekTo selesai
+        setTimeout(() => {
+          if (playerRef.current && typeof playerRef.current.playVideo === 'function') {
+            playerRef.current.playVideo();
+            setIsPlaying(true);
+          }
+        }, 150); // Naikkan delay jadi 150ms untuk lebih aman
       }
       return; // PENTING: Harus return di sini!
-    } 
+    }
     
     if (currentRepeatMode === 'all') {
       // Mode 'all': putar lagu berikutnya, loop ke awal jika sudah di akhir
@@ -407,23 +437,39 @@ export default function MusicPage() {
         // Masih ada lagu berikutnya di queue
         playNext();
       } else {
-        // Queue habis, stop
-        setIsPlaying(false);
-        setIsCurrentlyPlayingFromQueue(false);
+        // Queue habis, loop ke awal antrian
+        if (queue.length > 0) {
+          setCurrentSong(queue[0]);
+          setIsPlaying(true);
+          setIsCurrentlyPlayingFromQueue(true);
+        } else {
+          // Jika queue benar-benar kosong (edge case)
+          setIsPlaying(false);
+          setIsCurrentlyPlayingFromQueue(false);
+        }
       }
-      return; // PENTING: Tambahkan return di sini!
+      return;
     }
     
     // Jika dari playlist, cek apakah masih ada lagu berikutnya
-    const playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : filteredSongs;
+    // Jika dari playlist, cek apakah masih ada lagu berikutnya
+    // const playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : filteredSongs;
+    // PERBAIKAN: Gunakan active playlist songs
+    const playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : activePlaylistSongs;
     if (playQueue.length > 0) {
       const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
       if (currentIndex !== -1 && currentIndex < playQueue.length - 1) {
         // Masih ada lagu berikutnya di playlist
         playNext();
       } else {
-        // Sudah di akhir playlist, stop
-        setIsPlaying(false);
+        // PERBAIKAN: Jika shuffle aktif, loop ke awal playlist
+        if (isShuffled && playQueue.length > 0) {
+          setCurrentSong(playQueue[0]);
+          setIsPlaying(true);
+        } else {
+          // Sudah di akhir playlist dan shuffle off, stop
+          setIsPlaying(false);
+        }
       }
     } else {
       setIsPlaying(false);
@@ -796,14 +842,25 @@ export default function MusicPage() {
         setIsCurrentlyPlayingFromQueue(true); 
         return; 
       } else {
-        // Queue habis, kembali ke daftar lagu
-        setIsCurrentlyPlayingFromQueue(false);
-        // Jangan return di sini, lanjutkan ke logika daftar lagu
+        // PERBAIKAN: Sudah di akhir queue
+        // Jika repeat mode 'all', loop ke awal. Jika tidak, stop.
+        if (repeatModeRef.current === 'all') {
+          setCurrentSong(queue[0]);
+          setIsPlaying(true);
+          setIsCurrentlyPlayingFromQueue(true);
+        } else {
+          // Repeat mode 'off' atau 'one', stop di akhir queue
+          setIsPlaying(false);
+          showNotification('⏹️ Antrian selesai');
+        }
+        return;
       }
     }
 
     // Gunakan daftar lagu (filtered atau shuffled)
-    let playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : filteredSongs;
+    // let playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : filteredSongs;
+    // PERBAIKAN: Gunakan active playlist songs, bukan filtered songs
+    let playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : activePlaylistSongs;
     if (playQueue.length === 0) { 
       setIsPlaying(false); 
       return; 
@@ -840,13 +897,18 @@ export default function MusicPage() {
         setIsCurrentlyPlayingFromQueue(true); 
         return; 
       } else {
-        // Di awal queue, kembali ke daftar lagu
-        setIsCurrentlyPlayingFromQueue(false);
+        // Di awal queue, loop ke akhir antrian
+        setCurrentSong(queue[queue.length - 1]);
+        setIsPlaying(true);
+        setIsCurrentlyPlayingFromQueue(true);
+        return;
       }
     }
     
     // Gunakan daftar lagu (filtered atau shuffled)
-    let playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : filteredSongs;
+    // let playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : filteredSongs;
+    // PERBAIKAN: Gunakan active playlist songs, bukan filtered songs
+    let playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : activePlaylistSongs;
     if (playQueue.length === 0) { setIsPlaying(false); return; }
     
     const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
@@ -867,9 +929,12 @@ export default function MusicPage() {
     }
   }, [filteredSongs, isShuffled]); // Trigger ketika filtered songs atau shuffle status berubah
 
+  // TAMBAHKAN USEEFFECT BARU INI setelah useEffect auto re-shuffle:
+
+
   const toggleShuffle = () => {
     if (!isShuffled) {
-      setRepeatMode('off');
+      // HAPUS: setRepeatMode('off'); - Biarkan repeat tetap aktif
       const playQueue = isCurrentlyPlayingFromQueue && queue.length > 0 ? queue : filteredSongs; 
       let songsToShuffle = [...playQueue.filter(s => s.id !== currentSong?.id)];
       const shuffled = songsToShuffle.sort(() => Math.random() - 0.5);
@@ -888,14 +953,11 @@ export default function MusicPage() {
     const currentIndex = modes.indexOf(repeatMode);
     const newMode = modes[(currentIndex + 1) % modes.length];
     
-    // Clear shuffle jika repeat one/all aktif
-    if (newMode !== 'off' && isShuffled) {
-      setIsShuffled(false);
-      setShuffledOrder([]);
-    }
+    // HAPUS logika clear shuffle - Biarkan shuffle tetap aktif
     
+    // PENTING: Update ref DULU sebelum state
+    repeatModeRef.current = newMode;
     setRepeatMode(newMode);
-    repeatModeRef.current = newMode; // Update ref juga
     
     const msgs = { 
       off: '🔁 Repeat dimatikan', 
@@ -912,6 +974,9 @@ export default function MusicPage() {
       playerRef.current.seekTo(seekTime, true);
     }
   };
+
+  // const playerRef = useRef<any>(null);
+  const songListRef = useRef<{ [key: number]: HTMLDivElement | null }>({}); // TAMBAHKAN INI
 
   const addToQueue = (song: Song) => {
     setQueue(prev => {
@@ -967,6 +1032,29 @@ export default function MusicPage() {
     showNotification(`📊 ${sortLabels[criteria]}`);
   };
 
+  const [activePlaylistFilter, setActivePlaylistFilter] = useState<{
+    nada: string | null;
+    mood: string | null;
+    jenis: string | null;
+    likedBy: string | null;
+  } | null>(null);
+
+  // Filter untuk playlist yang sedang aktif (untuk next/prev)
+  const activePlaylistSongs = useMemo(() => {
+    if (!activePlaylistFilter) return filteredSongs;
+    
+    const filtered = songs.filter(song => {
+      const matchesNada = activePlaylistFilter.nada === null || song.playlist.includes(activePlaylistFilter.nada);
+      const matchesMood = activePlaylistFilter.mood === null || song.playlist.includes(activePlaylistFilter.mood);
+      const matchesJenis = activePlaylistFilter.jenis === null || song.playlist.includes(activePlaylistFilter.jenis);
+      const matchesLikedBy = activePlaylistFilter.likedBy === null || song.playlist.includes(activePlaylistFilter.likedBy);
+      
+      return matchesLikedBy && matchesNada && matchesMood && matchesJenis;
+    });
+
+    return sortSongs(filtered, sortCriteria);
+  }, [songs, activePlaylistFilter, sortCriteria]);
+
   if (!mounted) return <div className="h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>;
 
   return (
@@ -1014,6 +1102,7 @@ export default function MusicPage() {
                     ].filter(Boolean).length}
                   </span>
                 )}
+                {/* DIHAPUS: Indikator ✓ Aktif */}
               </button>
               {hasActiveFilters() && (
                 <button 
@@ -1033,19 +1122,28 @@ export default function MusicPage() {
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Liked by</label>
                   <div className="flex gap-2 flex-wrap">
-                    {playlistGroups.likedBy.map(pl => (
-                      <button 
-                        key={pl.id} 
-                        onClick={() => togglePlaylistSelection('likedBy', pl.id)} 
-                        className={`px-3 py-1 rounded-full text-xs transition-colors ${
-                          selectedPlaylists.likedBy === pl.id 
-                            ? 'bg-pink-600 text-white' 
-                            : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                        }`}
-                      >
-                        {pl.name}
-                      </button>
-                    ))}
+                    {playlistGroups.likedBy.map(pl => {
+                      const isActive = activePlaylistFilter?.likedBy === pl.id;
+                      const isSelected = selectedPlaylists.likedBy === pl.id;
+                      
+                      return (
+                        <button 
+                          key={pl.id} 
+                          onClick={() => togglePlaylistSelection('likedBy', pl.id)} 
+                          className={`px-3 py-1 rounded-full text-xs transition-all ${
+                            isActive && isSelected
+                              ? 'bg-pink-600 text-white border-2 border-pink-600 shadow-lg' 
+                              : isActive && !isSelected
+                                ? 'bg-gray-700/50 text-pink-300 border-2 border-pink-400 shadow-md'
+                                : isSelected
+                                  ? 'bg-pink-600 text-white border-2 border-pink-600'
+                                  : 'bg-gray-700/30 text-gray-400 border-2 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
+                          }`}
+                        >
+                          {pl.name}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1053,19 +1151,28 @@ export default function MusicPage() {
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Nada</label>
                     <div className="flex gap-2 flex-wrap">
-                      {playlistGroups.nada.map(pl => (
-                        <button 
-                          key={pl.id} 
-                          onClick={() => togglePlaylistSelection('nada', pl.id)} 
-                          className={`px-3 py-1 rounded-full text-xs transition-colors ${
-                            selectedPlaylists.nada === pl.id 
-                              ? 'bg-blue-600 text-white' 
-                              : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                          }`}
-                        >
-                          {pl.name}
-                        </button>
-                      ))}
+                      {playlistGroups.nada.map(pl => {
+                        const isActive = activePlaylistFilter?.nada === pl.id;
+                        const isSelected = selectedPlaylists.nada === pl.id;
+                        
+                        return (
+                          <button 
+                            key={pl.id} 
+                            onClick={() => togglePlaylistSelection('nada', pl.id)} 
+                            className={`px-3 py-1 rounded-full text-xs transition-all ${
+                              isActive && isSelected
+                                ? 'bg-blue-600 text-white border-2 border-blue-600 shadow-lg' 
+                                : isActive && !isSelected
+                                  ? 'bg-gray-800 text-blue-300 border-2 border-blue-400 shadow-md'
+                                  : isSelected
+                                    ? 'bg-blue-600 text-white border-2 border-blue-600' // UBAH: Full background
+                                    : 'bg-gray-700/30 text-gray-400 border-2 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
+                            }`}
+                          >
+                            {pl.name}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 
@@ -1074,19 +1181,28 @@ export default function MusicPage() {
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Mood</label>
                   <div className="flex gap-2 flex-wrap">
-                    {playlistGroups.mood.map(pl => (
-                      <button 
-                        key={pl.id} 
-                        onClick={() => togglePlaylistSelection('mood', pl.id)} 
-                        className={`px-3 py-1 rounded-full text-xs transition-colors ${
-                          selectedPlaylists.mood === pl.id 
-                            ? 'bg-green-600 text-white' 
-                            : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                        }`}
-                      >
-                        {pl.name}
-                      </button>
-                    ))}
+                    {playlistGroups.mood.map(pl => {
+                      const isActive = activePlaylistFilter?.mood === pl.id;
+                      const isSelected = selectedPlaylists.mood === pl.id;
+                      
+                      return (
+                        <button 
+                          key={pl.id} 
+                          onClick={() => togglePlaylistSelection('mood', pl.id)} 
+                          className={`px-3 py-1 rounded-full text-xs transition-all ${
+                            isActive && isSelected
+                              ? 'bg-green-600 text-white border-2 border-green-600 shadow-lg' 
+                              : isActive && !isSelected
+                                ? 'bg-gray-800 text-green-300 border-2 border-green-400 shadow-md'
+                                : isSelected
+                                  ? 'bg-green-600 text-white border-2 border-green-600' // UBAH: Full background
+                                  : 'bg-gray-700/30 text-gray-400 border-2 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
+                          }`}
+                        >
+                          {pl.name}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1094,19 +1210,28 @@ export default function MusicPage() {
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Jenis</label>
                   <div className="flex gap-2 flex-wrap">
-                    {playlistGroups.jenis.map(pl => (
-                      <button 
-                        key={pl.id} 
-                        onClick={() => togglePlaylistSelection('jenis', pl.id)} 
-                        className={`px-3 py-1 rounded-full text-xs transition-colors ${
-                          selectedPlaylists.jenis === pl.id 
-                            ? 'bg-purple-600 text-white' 
-                            : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                        }`}
-                      >
-                        {pl.name}
-                      </button>
-                    ))}
+                    {playlistGroups.jenis.map(pl => {
+                      const isActive = activePlaylistFilter?.jenis === pl.id;
+                      const isSelected = selectedPlaylists.jenis === pl.id;
+                      
+                      return (
+                        <button 
+                          key={pl.id} 
+                          onClick={() => togglePlaylistSelection('jenis', pl.id)} 
+                          className={`px-3 py-1 rounded-full text-xs transition-all ${
+                            isActive && isSelected
+                              ? 'bg-purple-600 text-white border-2 border-purple-600 shadow-lg' 
+                              : isActive && !isSelected
+                                ? 'bg-gray-800 text-purple-300 border-2 border-purple-400 shadow-md'
+                                : isSelected
+                                  ? 'bg-purple-600 text-white border-2 border-purple-600' // UBAH: Full background
+                                  : 'bg-gray-700/30 text-gray-400 border-2 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
+                          }`}
+                        >
+                          {pl.name}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1168,12 +1293,61 @@ export default function MusicPage() {
                   return (
                     <div 
                       key={song.id} 
+                      ref={(el) => { songListRef.current[song.id] = el; }}
                       className={`group flex items-center gap-3 p-3 rounded-lg transition-all duration-200 cursor-pointer hover:bg-gray-700 ${
                         currentSong?.id === song.id 
                           ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg scale-[1.02]' 
-                          : 'bg-gray-750 hover:scale-[1.01]'
+                          : (() => {
+                              // Cek apakah ada active playlist filter
+                              if (activePlaylistFilter) {
+                                const isInActivePlaylist = activePlaylistSongs.some(s => s.id === song.id);
+                                const isInCurrentView = filteredSongs.some(s => s.id === song.id);
+                                
+                                // Lagu ada di active playlist DAN di view sekarang (irisan)
+                                if (isInActivePlaylist && isInCurrentView) {
+                                  const isViewingDifferentPlaylist = 
+                                    activePlaylistFilter.nada !== selectedPlaylists.nada ||
+                                    activePlaylistFilter.mood !== selectedPlaylists.mood ||
+                                    activePlaylistFilter.jenis !== selectedPlaylists.jenis ||
+                                    activePlaylistFilter.likedBy !== selectedPlaylists.likedBy;
+                                  
+                                  // Jika sedang melihat playlist yang berbeda, tandai dengan warna khusus
+                                  return isViewingDifferentPlaylist 
+                                    ? 'bg-gradient-to-r from-yellow-700/40 to-yellow-600/40 border border-yellow-500/30 hover:scale-[1.01]' // Gold untuk irisan
+                                    : 'bg-gray-750 hover:scale-[1.01]'; // Normal untuk playlist aktif yang sama
+                                }
+                                
+                                // Lagu HANYA di active playlist (tidak di view sekarang) - tidak akan muncul di list
+                                // Lagu HANYA di view sekarang (tidak di active playlist)
+                                if (!isInActivePlaylist && isInCurrentView) {
+                                  return 'bg-gray-800/50 hover:scale-[1.01]'; // Lebih gelap untuk playlist tidak aktif
+                                }
+                              }
+                              
+                              // Default: tidak ada active playlist
+                              return 'bg-gray-750 hover:scale-[1.01]';
+                            })()
                       }`}
                       onClick={() => { 
+                        // PENTING: Set active playlist saat klik lagu
+                        setActivePlaylistFilter({...selectedPlaylists});
+                        
+                        // TAMBAHAN: Clear search dan scroll ke lagu
+                        if (searchQuery !== '') {
+                          setSearchQuery('');
+                          
+                          // Scroll ke lagu setelah search di-clear
+                          setTimeout(() => {
+                            const songElement = songListRef.current[song.id];
+                            if (songElement) {
+                              songElement.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'center' 
+                              });
+                            }
+                          }, 100); // Delay untuk memastikan list sudah ter-render ulang
+                        }
+                        
                         // Force refresh jika klik lagu yang sama
                         if (currentSong?.id === song.id) {
                           setIsPlaying(false);
@@ -1391,6 +1565,11 @@ export default function MusicPage() {
                   {repeatMode !== 'off' && <span className="text-blue-400 flex items-center gap-1"><Repeat size={10} /> {repeatMode === 'all' ? 'All' : 'One'}</span>}
                   {queue.length > 0 && <span className="text-green-400 flex items-center gap-1"><List size={10} /> {queue.length}</span>}
                   {isCurrentlyPlayingFromQueue && <span className="text-purple-400 flex items-center gap-1">▶️ Dari Antrian</span>}
+                  {activePlaylistFilter && (
+                    <span className="text-yellow-400 flex items-center gap-1">
+                      🎯 Playlist Aktif
+                    </span>
+                  )}
                 </div>
               </div>
             )}
