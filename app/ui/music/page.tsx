@@ -85,6 +85,8 @@ export default function MusicPage() {
   const [isShuffled, setIsShuffled] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off');
   const repeatModeRef = useRef<'off' | 'all' | 'one'>('off'); // Tambah ini
+  const isShuffledRef = useRef<boolean>(false); // TAMBAHAN BARU
+  const shuffledOrderRef = useRef<Song[]>([]); // TAMBAHAN BARU
   const [shuffledOrder, setShuffledOrder] = useState<Song[]>([]);
   const [selectedPlaylists, setSelectedPlaylists] = useState<{
     nada: string | null;
@@ -151,6 +153,16 @@ export default function MusicPage() {
   useEffect(() => {
     repeatModeRef.current = repeatMode;
   }, [repeatMode]);
+
+  // Sync isShuffledRef dengan isShuffled state
+  useEffect(() => {
+    isShuffledRef.current = isShuffled;
+  }, [isShuffled]);
+
+  // TAMBAHAN BARU: Sync shuffledOrderRef dengan shuffledOrder state
+  useEffect(() => {
+    shuffledOrderRef.current = shuffledOrder;
+  }, [shuffledOrder]);
 
   useEffect(() => {
       if (isPlaying) {
@@ -396,7 +408,20 @@ export default function MusicPage() {
 
   const handleVideoEnded = () => {
     const currentRepeatMode = repeatModeRef.current;
-    console.log('Video ended. Repeat mode from ref:', currentRepeatMode);
+    const currentIsShuffled = isShuffledRef.current;
+    const currentShuffledOrder = shuffledOrderRef.current;
+    
+    console.log('Video ended. Repeat mode from ref:', currentRepeatMode, 'Shuffle:', currentIsShuffled, 'ShuffledOrder length:', currentShuffledOrder.length);
+    
+    // PERBAIKAN KRUSIAL: Validasi konsistensi shuffle state
+    // Jika shuffle false TAPI shuffledOrder masih ada isi (state transitional), 
+    // paksa kosongkan dan gunakan mode normal
+    if (!currentIsShuffled && currentShuffledOrder.length > 0) {
+      console.warn('Inconsistent shuffle state detected! Forcing normal mode.');
+      shuffledOrderRef.current = []; // Paksa kosongkan
+      setShuffledOrder([]); // Sync state
+      // Lanjutkan ke mode normal di bawah
+    }
     
     if (currentRepeatMode === 'one') {
       console.log('Repeating current song');
@@ -425,25 +450,75 @@ export default function MusicPage() {
       return;
     }
     
-    // PERBAIKAN: Gunakan queueRef.current, bukan queue
     if (isCurrentlyPlayingFromQueue && queueRef.current.length > 0) {
-      console.log('Queue length from ref:', queueRef.current.length); // Debug log
+      console.log('Queue length from ref:', queueRef.current.length);
       playNext();
       return;
     }
     
-    const playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : activePlaylistSongs;
+    // PERBAIKAN: Gunakan shuffledOrderRef.current yang sudah pasti konsisten
+    const validShuffledOrder = shuffledOrderRef.current;
+
+    // PENGECEKAN TAMBAHAN: Jika lagu saat ini ada di shuffledOrder TAPI shuffle sudah dimatikan
+    // Artinya ini lagu hasil shuffle yang sedang diputar, tapi user sudah matikan shuffle
+    // PAKSA gunakan mode normal untuk lagu berikutnya
+    const isCurrentSongFromOldShuffle = 
+      !currentIsShuffled && 
+      validShuffledOrder.length > 0 && 
+      validShuffledOrder.some(s => s.id === currentSong.id);
+
+    if (isCurrentSongFromOldShuffle) {
+      console.warn('Current song is from old shuffle, but shuffle is now OFF. Using normal mode.');
+      // Kosongkan shuffled order SEGERA
+      shuffledOrderRef.current = [];
+      setShuffledOrder([]);
+      // Lanjut ke mode normal di bawah (jangan return!)
+    }
+
+    // Shuffle mode - HARUS memenuhi KEDUA kondisi DAN bukan dari old shuffle
+    if (currentIsShuffled === true && validShuffledOrder.length > 0 && !isCurrentSongFromOldShuffle) {
+      console.log('Using shuffle mode');
+      const currentIndex = validShuffledOrder.findIndex(s => s.id === currentSong.id);
+      
+      if (currentIndex !== -1 && currentIndex < validShuffledOrder.length - 1) {
+        const nextIndex = currentIndex + 1;
+        console.log('Playing next shuffled song at index:', nextIndex);
+        setCurrentSong(validShuffledOrder[nextIndex]);
+        setIsPlaying(true);
+      } else {
+        console.log('End of shuffled order, re-shuffling');
+        const songsToShuffle = [...activePlaylistSongs.filter(s => s.id !== currentSong?.id)];
+        
+        if (songsToShuffle.length > 0) {
+          const newShuffled = songsToShuffle.sort(() => Math.random() - 0.5);
+          const newOrder = [currentSong, ...newShuffled];
+          setShuffledOrder(newOrder);
+          shuffledOrderRef.current = newOrder;
+          setCurrentSong(newShuffled[0]);
+          setIsPlaying(true);
+        } else {
+          setCurrentSong(currentSong);
+          setIsPlaying(true);
+        }
+      }
+      return;
+    }
+
+    // Mode normal (tidak shuffle, tidak repeat)
+    console.log('Using normal mode (no shuffle)');
+    const playQueue = activePlaylistSongs;
     if (playQueue.length > 0) {
       const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
       if (currentIndex !== -1 && currentIndex < playQueue.length - 1) {
-        playNext();
+        console.log('Playing next song in normal order');
+        // PERBAIKAN: Langsung set lagu berikutnya tanpa memanggil playNext()
+        const nextIndex = currentIndex + 1;
+        setCurrentSong(playQueue[nextIndex]);
+        setIsPlaying(true);
+        setIsCurrentlyPlayingFromQueue(false);
       } else {
-        if (isShuffled && playQueue.length > 0) {
-          setCurrentSong(playQueue[0]);
-          setIsPlaying(true);
-        } else {
-          setIsPlaying(false);
-        }
+        console.log('End of playlist, stopping');
+        setIsPlaying(false);
       }
     } else {
       setIsPlaying(false);
@@ -894,17 +969,6 @@ export default function MusicPage() {
     setIsCurrentlyPlayingFromQueue(false);
   };
 
-  // Tambahkan useEffect baru setelah useEffect yang ada
-  useEffect(() => {
-    // Auto re-shuffle ketika filteredSongs berubah dan shuffle aktif
-    if (isShuffled && filteredSongs.length > 0) {
-      const playQueue = isCurrentlyPlayingFromQueue && queue.length > 0 ? queue : filteredSongs;
-      let songsToShuffle = [...playQueue.filter(s => s.id !== currentSong?.id)];
-      const shuffled = songsToShuffle.sort(() => Math.random() - 0.5);
-      setShuffledOrder(currentSong ? [currentSong, ...shuffled] : shuffled);
-    }
-  }, [filteredSongs, isShuffled]); // Trigger ketika filtered songs atau shuffle status berubah
-
   // TAMBAHKAN USEEFFECT BARU INI setelah useEffect auto re-shuffle:
 
   const toggleShuffle = () => {
@@ -921,15 +985,45 @@ export default function MusicPage() {
     }
     
     if (!isShuffled) {
-      const playQueue = isCurrentlyPlayingFromQueue && queue.length > 0 ? queue : filteredSongs; 
-      let songsToShuffle = [...playQueue.filter(s => s.id !== currentSong?.id)];
-      const shuffled = songsToShuffle.sort(() => Math.random() - 0.5);
-      setShuffledOrder(currentSong ? [currentSong, ...shuffled] : shuffled);
-      setIsShuffled(true);
-      showNotification('🔀 Shuffle diaktifkan');
+      // Aktifkan shuffle
+      const playQueue = activePlaylistSongs;
+      
+      const currentIndex = playQueue.findIndex(s => s.id === currentSong?.id);
+      const isLastSong = currentIndex === playQueue.length - 1;
+      
+      if (isLastSong && currentSong) {
+        const allSongs = [...playQueue];
+        const shuffled = allSongs.sort(() => Math.random() - 0.5);
+        setShuffledOrder(shuffled);
+        setIsShuffled(true);
+        
+        // TAMBAHAN: Update ref langsung
+        shuffledOrderRef.current = shuffled;
+        isShuffledRef.current = true;
+        
+        showNotification('🔀 Shuffle diaktifkan (lagu berikutnya acak)');
+      } else {
+        let songsToShuffle = [...playQueue.filter(s => s.id !== currentSong?.id)];
+        const shuffled = songsToShuffle.sort(() => Math.random() - 0.5);
+        const newOrder = currentSong ? [currentSong, ...shuffled] : shuffled;
+        setShuffledOrder(newOrder);
+        setIsShuffled(true);
+        
+        // TAMBAHAN: Update ref langsung
+        shuffledOrderRef.current = newOrder;
+        isShuffledRef.current = true;
+        
+        showNotification('🔀 Shuffle diaktifkan');
+      }
     } else {
+      // Matikan shuffle
       setShuffledOrder([]);
       setIsShuffled(false);
+      
+      // PERBAIKAN KRUSIAL: Kosongkan ref SEGERA (jangan tunggu state update)
+      shuffledOrderRef.current = [];
+      isShuffledRef.current = false;
+      
       showNotification('🔀 Shuffle dimatikan');
     }
   };
@@ -1085,16 +1179,47 @@ export default function MusicPage() {
     return sortSongs(filtered, sortCriteria);
   }, [songs, activePlaylistFilter, sortCriteria]);
 
+  // Tambahkan useEffect baru setelah useEffect yang ada
+  useEffect(() => {
+    // PERBAIKAN KRUSIAL: Cek ref DAN length shuffledOrder saat ini
+    // Jika shuffledOrderRef kosong, jangan lakukan apa-apa (shuffle baru dimatikan)
+    if (!isShuffledRef.current || shuffledOrderRef.current.length === 0) {
+      return; // Skip jika shuffle tidak aktif atau baru dimatikan
+    }
+    
+    // Auto re-shuffle ketika activePlaylistSongs berubah dan shuffle aktif
+    if (isShuffled && activePlaylistSongs.length > 0 && !isCurrentlyPlayingFromQueue) {
+      let songsToShuffle = [...activePlaylistSongs.filter(s => s.id !== currentSong?.id)];
+      const shuffled = songsToShuffle.sort(() => Math.random() - 0.5);
+      const newOrder = currentSong ? [currentSong, ...shuffled] : shuffled;
+      setShuffledOrder(newOrder);
+      
+      // TAMBAHAN PENTING: Update ref juga!
+      shuffledOrderRef.current = newOrder;
+    }
+  }, [activePlaylistSongs, isShuffled]);
+
   // Re-shuffle dan maintain repeat saat berganti playlist
   useEffect(() => {
     // Jika tidak ada active playlist filter atau sedang dari queue, skip
     if (!activePlaylistFilter || isCurrentlyPlayingFromQueue) return;
     
+    // PERBAIKAN KRUSIAL: Cek ref DAN length shuffledOrder saat ini
+    // Jika shuffledOrderRef kosong, jangan lakukan apa-apa (shuffle baru dimatikan)
+    if (!isShuffledRef.current || shuffledOrderRef.current.length === 0) {
+      return; // Skip jika shuffle tidak aktif atau baru dimatikan
+    }
+    
     // Re-shuffle dengan lagu dari playlist baru jika shuffle aktif
     if (isShuffled && activePlaylistSongs.length > 0) {
       let songsToShuffle = [...activePlaylistSongs.filter(s => s.id !== currentSong?.id)];
       const shuffled = songsToShuffle.sort(() => Math.random() - 0.5);
-      setShuffledOrder(currentSong ? [currentSong, ...shuffled] : shuffled);
+      const newOrder = currentSong ? [currentSong, ...shuffled] : shuffled;
+      setShuffledOrder(newOrder);
+      
+      // TAMBAHAN PENTING: Update ref juga!
+      shuffledOrderRef.current = newOrder;
+      
       showNotification('🔀 Shuffle diperbarui untuk playlist baru');
     }
     
@@ -1102,7 +1227,7 @@ export default function MusicPage() {
     if (repeatMode !== 'off') {
       showNotification(`🔁 Repeat ${repeatMode === 'all' ? 'All' : 'One'} tetap aktif`);
     }
-  }, [activePlaylistFilter]); // Trigger saat activePlaylistFilter berubah
+  }, [activePlaylistFilter]);
 
   if (!mounted) return <div className="h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>;
 
