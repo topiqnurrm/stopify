@@ -876,17 +876,32 @@ export default function MusicPage() {
   };
 
   const togglePlay = () => {
-    // Jika saat ini tidak playing dan tidak ada currentSong atau sudah di akhir playlist
-    if (!isPlaying && currentSong) {
-      // Cek apakah lagu sudah selesai (di akhir playlist)
+    // PERBAIKAN: Cek apakah playlist sudah selesai (lagu terakhir + tidak playing + bukan dari queue)
+    if (!isPlaying && currentSong && !isCurrentlyPlayingFromQueue) {
       const playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : activePlaylistSongs;
       const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
       const isAtEnd = currentIndex === playQueue.length - 1;
       
-      // Jika di akhir playlist dan repeat off, mulai dari awal
+      // Jika di akhir playlist dan repeat off, mulai dari awal playlist
       if (isAtEnd && repeatMode === 'off' && playQueue.length > 0) {
         setCurrentSong(playQueue[0]);
         setIsPlaying(true);
+        showNotification('🔄 Memutar ulang dari awal playlist');
+        return;
+      }
+    }
+    
+    // TAMBAHAN BARU: Cek apakah antrian sudah selesai (lagu terakhir antrian + tidak playing + dari queue)
+    if (!isPlaying && currentSong && isCurrentlyPlayingFromQueue && queue.length > 0) {
+      const currentIndex = queue.findIndex(s => s.id === currentSong.id);
+      const isAtEnd = currentIndex === queue.length - 1;
+      
+      // Jika di akhir antrian dan repeat off, mulai dari awal antrian
+      if (isAtEnd && repeatMode !== 'all' && queue.length > 0) {
+        setCurrentSong(queue[0]);
+        setIsPlaying(true);
+        setIsCurrentlyPlayingFromQueue(true);
+        showNotification('🔄 Memutar ulang antrian dari awal');
         return;
       }
     }
@@ -901,7 +916,7 @@ export default function MusicPage() {
       }
     }
     
-    // Toggle biasa
+    // Toggle biasa (pause/resume lagu saat ini)
     setIsPlaying(!isPlaying);
   };
 
@@ -1006,10 +1021,12 @@ export default function MusicPage() {
       return;
     }
     
-    // REVISI: Hanya cegah shuffle saat repeat ONE aktif (bukan repeat all)
-    if (repeatMode === 'one') {
-      showNotification('⚠️ Matikan Repeat One terlebih dahulu untuk mengaktifkan Shuffle');
-      return;
+    // PERBAIKAN: Jika repeat ONE aktif, matikan otomatis saat shuffle diaktifkan
+    if (repeatMode === 'one' && !isShuffled) {
+      repeatModeRef.current = 'off';
+      setRepeatMode('off');
+      showNotification('🔁 Repeat One dimatikan • 🔀 Shuffle diaktifkan');
+      // Lanjutkan ke aktivasi shuffle di bawah
     }
     
     if (!isShuffled) {
@@ -1558,18 +1575,30 @@ export default function MusicPage() {
                           }, 100);
                         }
                         
-                        // PERBAIKAN: Cek apakah lagu sudah selesai (isPlaying false DI lagu yang sama)
+                        // PERBAIKAN: Logika baru untuk handle klik lagu
                         if (currentSong?.id === song.id) {
-                          // Jika lagu sama tapi sudah tidak playing, paksa play (restart)
-                          if (!isPlaying) {
-                            // Restart lagu dari awal jika sudah selesai
-                            if (playerRef.current && isPlayerReady) {
-                              playerRef.current.seekTo(0);
+                          // Lagu sama yang diklik
+                          if (!isPlaying && !isCurrentlyPlayingFromQueue) {
+                            // Cek apakah ini lagu terakhir yang sudah selesai
+                            const playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : activePlaylistSongs;
+                            const currentIndex = playQueue.findIndex(s => s.id === song.id);
+                            const isLastSong = currentIndex === playQueue.length - 1;
+                            
+                            if (isLastSong && repeatMode === 'off') {
+                              // Lagu terakhir yang sudah selesai -> mulai dari awal playlist
+                              setCurrentSong(playQueue[0]);
+                              setIsPlaying(true);
+                              showNotification('🔄 Memutar ulang dari awal playlist');
+                            } else {
+                              // Lagu di tengah yang dipause -> lanjutkan
+                              setIsPlaying(true);
                             }
-                            setIsPlaying(true);
+                          } else if (isPlaying) {
+                            // Sedang playing -> pause
+                            setIsPlaying(false);
                           } else {
-                            // Jika sedang playing, toggle pause
-                            setIsPlaying(!isPlaying);
+                            // Dari queue yang tidak playing -> play lanjut
+                            setIsPlaying(true);
                           }
                         } else {
                           // Lagu berbeda, ganti dan play
@@ -1861,19 +1890,32 @@ export default function MusicPage() {
                   <div 
                     className="flex-1 cursor-pointer min-w-0" 
                     onClick={() => { 
-                      // PERBAIKAN: Cek apakah lagu sudah selesai (isPlaying false DI lagu yang sama)
+                      // PERBAIKAN: Logika baru untuk handle klik lagu di antrian
                       if (currentSong?.id === song.id) {
-                        // Jika lagu sama tapi sudah tidak playing, paksa play (restart)
-                        if (!isPlaying) {
-                          // Restart lagu dari awal jika sudah selesai
-                          if (playerRef.current && isPlayerReady) {
-                            playerRef.current.seekTo(0);
+                        // Lagu sama yang diklik
+                        if (!isPlaying && isCurrentlyPlayingFromQueue) {
+                          // Cek apakah ini lagu terakhir di antrian yang sudah selesai
+                          const currentIndex = queue.findIndex(s => s.id === song.id);
+                          const isLastSongInQueue = currentIndex === queue.length - 1;
+                          
+                          if (isLastSongInQueue && repeatMode !== 'all') {
+                            // Lagu terakhir antrian yang sudah selesai -> mulai dari awal antrian
+                            setCurrentSong(queue[0]);
+                            setIsPlaying(true);
+                            setIsCurrentlyPlayingFromQueue(true);
+                            showNotification('🔄 Memutar ulang antrian dari awal');
+                          } else {
+                            // Lagu di tengah antrian yang dipause -> lanjutkan
+                            setIsPlaying(true);
+                            setIsCurrentlyPlayingFromQueue(true);
                           }
-                          setIsPlaying(true);
+                        } else if (isPlaying) {
+                          // Sedang playing -> pause
+                          setIsPlaying(!isPlaying);
                           setIsCurrentlyPlayingFromQueue(true);
                         } else {
-                          // Jika sedang playing, toggle pause
-                          setIsPlaying(!isPlaying);
+                          // Dari playlist yang tidak playing -> play lanjut
+                          setIsPlaying(true);
                           setIsCurrentlyPlayingFromQueue(true);
                         }
                       } else {
