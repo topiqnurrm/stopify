@@ -72,6 +72,17 @@ export async function GET() {
 
     const data = [
         {
+            id: 359,
+            judul: "Sedia Aku Sebelum Hujan, Idgitaf",
+            link: "https://www.youtube.com/watch?v=0UT_QyO3ZLQ",
+            tahun: "2025 Oktober 08",
+            added: "13 Desember 2025",
+            playlist : [
+                "b",
+                "3", "5", "7", "9",
+            ],
+        },
+        {
             id: 358,
             judul: "Where Have You Been, Rihanna",
             //type: "NATI",
