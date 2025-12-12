@@ -614,6 +614,8 @@ export default function MusicPage() {
       { id: 'a', name: 'Normal' },
       { id: 'd', name: 'Rap' },
       { id: 'e', name: 'Phonk' },
+      { id: 'f', name: 'Jawa' },
+      { id: 'g', name: 'DJ' },
     ],
     jenis: [
       { id: '7', name: 'Nyanyiable' },
@@ -636,6 +638,8 @@ export default function MusicPage() {
     'a' : "Normal",
     'd' : "Rap",
     'e' : "Phonk",
+    'f' : "Jawa",
+    'g' : "DJ",
 
     '7': 'Nyanyiable',
     '8': 'Hearingable',
@@ -1326,7 +1330,12 @@ export default function MusicPage() {
           {/* Sticky Header */}
           <div className="flex-shrink-0 sticky top-0 bg-gray-800 z-10 p-4 pb-2 border-b border-gray-700">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">🎵 Music Playlist</h2>
+              <h2 className="text-xl font-bold">
+                🎵 Music Playlist 
+                <span className="ml-2 text-base font-normal text-gray-400">
+                  ({filteredSongs.length})
+                </span>
+              </h2>
               <button onClick={() => { setIsSidebarOpen(false); setUserClosedSidebar(true); }} className="md:hidden p-2 hover:bg-gray-700 rounded"><X size={24} /></button>
             </div>
           
@@ -1371,39 +1380,56 @@ export default function MusicPage() {
             {isFilterExpanded && (
               <div className="space-y-3">
 
-                {/* Grup Liked by - DIPINDAHKAN KE ATAS */}
+                {/* Grup Liked by */}
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Liked by</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {playlistGroups.likedBy.map(pl => {
-                      const isActive = activePlaylistFilter?.likedBy === pl.id;
-                      const isSelected = selectedPlaylists.likedBy === pl.id;
-                      
-                      return (
-                        <button 
-                          key={pl.id} 
-                          onClick={() => togglePlaylistSelection('likedBy', pl.id)} 
-                          className={`px-3 py-1 rounded-full text-xs transition-all ${
-                            isActive && isSelected
-                              ? 'bg-pink-600 text-white border-2 border-pink-600 shadow-lg' 
-                              : isActive && !isSelected
-                                ? 'bg-gray-700/50 text-pink-300 border-2 border-pink-400 shadow-md'
-                                : isSelected
-                                  ? 'bg-pink-600 text-white border-2 border-pink-600'
-                                  : 'bg-gray-700/30 text-gray-400 border-2 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
-                          }`}
-                        >
-                          {pl.name}
-                        </button>
-                      );
-                    })}
+                  <label className="text-xs text-gray-500 mb-1 block">
+                    Liked by
+                    {activePlaylistFilter?.likedBy && (
+                      <span className="ml-2 text-pink-400 font-semibold">
+                        • {playlistGroups.likedBy.find(p => p.id === activePlaylistFilter.likedBy)?.name}
+                      </span>
+                    )}
+                  </label>
+                  <div className="overflow-x-auto pb-2 -mx-1 px-1 playlist-filter-scrollbar">
+                    <div className="flex gap-2 min-w-max py-1">
+                      {playlistGroups.likedBy.map(pl => {
+                        const isActive = activePlaylistFilter?.likedBy === pl.id;
+                        const isSelected = selectedPlaylists.likedBy === pl.id;
+                        
+                        return (
+                          <button 
+                            key={pl.id} 
+                            onClick={() => togglePlaylistSelection('likedBy', pl.id)} 
+                            className={`px-2.5 py-0.5 rounded-full text-xs transition-all whitespace-nowrap ${
+                              isActive && isSelected
+                                ? 'bg-pink-600 text-white shadow-[0_0_0_2px_rgba(219,39,119,0.5)]' 
+                                : isActive && !isSelected
+                                  ? 'bg-gray-700/50 text-pink-300 shadow-[0_0_0_2px_rgba(244,114,182,0.4)]'
+                                  : isSelected
+                                    ? 'bg-pink-600 text-white shadow-[0_0_0_2px_rgba(219,39,119,0.5)]'
+                                    : 'bg-gray-700/30 text-gray-400 hover:bg-gray-700/50'
+                            }`}
+                          >
+                            {pl.name}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
                 {/* Grup Nada */}
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Nada</label>
-                    <div className="flex gap-2 flex-wrap">
+                  <label className="text-xs text-gray-500 mb-1 block">
+                    Nada
+                    {activePlaylistFilter?.nada && (
+                      <span className="ml-2 text-blue-400 font-semibold">
+                        • {playlistGroups.nada.find(p => p.id === activePlaylistFilter.nada)?.name}
+                      </span>
+                    )}
+                  </label>
+                  <div className="overflow-x-auto pb-2 -mx-1 px-1 playlist-filter-scrollbar">
+                    <div className="flex gap-2 min-w-max py-1">
                       {playlistGroups.nada.map(pl => {
                         const isActive = activePlaylistFilter?.nada === pl.id;
                         const isSelected = selectedPlaylists.nada === pl.id;
@@ -1412,13 +1438,13 @@ export default function MusicPage() {
                           <button 
                             key={pl.id} 
                             onClick={() => togglePlaylistSelection('nada', pl.id)} 
-                            className={`px-3 py-1 rounded-full text-xs transition-all ${
+                            className={`px-2.5 py-0.5 rounded-full text-xs transition-all whitespace-nowrap ${
                               isActive && isSelected
                                 ? 'bg-blue-600 text-white border-2 border-blue-600 shadow-lg' 
                                 : isActive && !isSelected
                                   ? 'bg-gray-800 text-blue-300 border-2 border-blue-400 shadow-md'
                                   : isSelected
-                                    ? 'bg-blue-600 text-white border-2 border-blue-600' // UBAH: Full background
+                                    ? 'bg-blue-600 text-white border-2 border-blue-600'
                                     : 'bg-gray-700/30 text-gray-400 border-2 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
                             }`}
                           >
@@ -1428,67 +1454,85 @@ export default function MusicPage() {
                       })}
                     </div>
                   </div>
-                
+                </div>
 
                 {/* Grup Mood */}
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Mood</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {playlistGroups.mood.map(pl => {
-                      const isActive = activePlaylistFilter?.mood === pl.id;
-                      const isSelected = selectedPlaylists.mood === pl.id;
-                      
-                      return (
-                        <button 
-                          key={pl.id} 
-                          onClick={() => togglePlaylistSelection('mood', pl.id)} 
-                          className={`px-3 py-1 rounded-full text-xs transition-all ${
-                            isActive && isSelected
-                              ? 'bg-green-600 text-white border-2 border-green-600 shadow-lg' 
-                              : isActive && !isSelected
-                                ? 'bg-gray-800 text-green-300 border-2 border-green-400 shadow-md'
-                                : isSelected
-                                  ? 'bg-green-600 text-white border-2 border-green-600' // UBAH: Full background
-                                  : 'bg-gray-700/30 text-gray-400 border-2 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
-                          }`}
-                        >
-                          {pl.name}
-                        </button>
-                      );
-                    })}
+                  <label className="text-xs text-gray-500 mb-1 block">
+                    Mood
+                    {activePlaylistFilter?.mood && (
+                      <span className="ml-2 text-green-400 font-semibold">
+                        • {playlistGroups.mood.find(p => p.id === activePlaylistFilter.mood)?.name}
+                      </span>
+                    )}
+                  </label>
+                  <div className="overflow-x-auto pb-2 -mx-1 px-1 playlist-filter-scrollbar">
+                    <div className="flex gap-2 min-w-max py-1">
+                      {playlistGroups.mood.map(pl => {
+                        const isActive = activePlaylistFilter?.mood === pl.id;
+                        const isSelected = selectedPlaylists.mood === pl.id;
+                        
+                        return (
+                          <button 
+                            key={pl.id} 
+                            onClick={() => togglePlaylistSelection('mood', pl.id)} 
+                            className={`px-2.5 py-0.5 rounded-full text-xs transition-all whitespace-nowrap ${
+                              isActive && isSelected
+                                ? 'bg-green-600 text-white border-2 border-green-600 shadow-lg' 
+                                : isActive && !isSelected
+                                  ? 'bg-gray-800 text-green-300 border-2 border-green-400 shadow-md'
+                                  : isSelected
+                                    ? 'bg-green-600 text-white border-2 border-green-600'
+                                    : 'bg-gray-700/30 text-gray-400 border-2 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
+                            }`}
+                          >
+                            {pl.name}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
                 {/* Grup Jenis */}
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Jenis</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {playlistGroups.jenis.map(pl => {
-                      const isActive = activePlaylistFilter?.jenis === pl.id;
-                      const isSelected = selectedPlaylists.jenis === pl.id;
-                      
-                      return (
-                        <button 
-                          key={pl.id} 
-                          onClick={() => togglePlaylistSelection('jenis', pl.id)} 
-                          className={`px-3 py-1 rounded-full text-xs transition-all ${
-                            isActive && isSelected
-                              ? 'bg-purple-600 text-white border-2 border-purple-600 shadow-lg' 
-                              : isActive && !isSelected
-                                ? 'bg-gray-800 text-purple-300 border-2 border-purple-400 shadow-md'
-                                : isSelected
-                                  ? 'bg-purple-600 text-white border-2 border-purple-600' // UBAH: Full background
-                                  : 'bg-gray-700/30 text-gray-400 border-2 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
-                          }`}
-                        >
-                          {pl.name}
-                        </button>
-                      );
-                    })}
+                  <label className="text-xs text-gray-500 mb-1 block">
+                    Jenis
+                    {activePlaylistFilter?.jenis && (
+                      <span className="ml-2 text-purple-400 font-semibold">
+                        • {playlistGroups.jenis.find(p => p.id === activePlaylistFilter.jenis)?.name}
+                      </span>
+                    )}
+                  </label>
+                  <div className="overflow-x-auto pb-2 -mx-1 px-1 playlist-filter-scrollbar">
+                    <div className="flex gap-2 min-w-max py-1">
+                      {playlistGroups.jenis.map(pl => {
+                        const isActive = activePlaylistFilter?.jenis === pl.id;
+                        const isSelected = selectedPlaylists.jenis === pl.id;
+                        
+                        return (
+                          <button 
+                            key={pl.id} 
+                            onClick={() => togglePlaylistSelection('jenis', pl.id)} 
+                            className={`px-2.5 py-0.5 rounded-full text-xs transition-all whitespace-nowrap ${
+                              isActive && isSelected
+                                ? 'bg-purple-600 text-white border-2 border-purple-600 shadow-lg' 
+                                : isActive && !isSelected
+                                  ? 'bg-gray-800 text-purple-300 border-2 border-purple-400 shadow-md'
+                                  : isSelected
+                                    ? 'bg-purple-600 text-white border-2 border-purple-600'
+                                    : 'bg-gray-700/30 text-gray-400 border-2 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
+                            }`}
+                          >
+                            {pl.name}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
-                {/* Info filter aktif */}
+                {/* Info filter aktif - tetap sama */}
                 {hasActiveFilters() && (
                   <div className="text-xs text-gray-400 bg-gray-700 px-3 py-2 rounded">
                     Filter aktif: {[
@@ -1537,7 +1581,7 @@ export default function MusicPage() {
         </div>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto px-4 pb-4">
+        <div className="flex-1 overflow-y-auto px-4 pb-4 song-list-scrollbar">
           <div className="space-y-2"> 
             {filteredSongs.length === 0 ? (
             <div className="text-center text-gray-400 py-8"><Music size={48} className="mx-auto mb-4 opacity-50" /><p className="text-sm">Tidak ada lagu</p></div>
@@ -1912,7 +1956,7 @@ export default function MusicPage() {
             </div>
             
             {/* Scrollable Queue Content */}
-            <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2">
+            <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2 queue-scrollbar">
               <div className="space-y-2">
               {queue.map((song, index) => (
                 <div 
@@ -2067,6 +2111,60 @@ export default function MusicPage() {
         /* Jika ada iframe di dalam youtube-player */
         #youtube-player iframe {
           pointer-events: none;
+        }
+
+        /* ===== CUSTOM SCROLLBAR STYLES ===== */
+
+        /* Scrollbar untuk daftar lagu (elegan dengan indikator) */
+        .song-list-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .song-list-scrollbar::-webkit-scrollbar-track {
+          background: rgba(55, 65, 81, 0.3);
+          border-radius: 10px;
+        }
+
+        .song-list-scrollbar::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+          border-radius: 10px;
+          border: 2px solid transparent;
+          background-clip: content-box;
+        }
+
+        .song-list-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, #2563eb, #7c3aed);
+          background-clip: content-box;
+        }
+
+        /* Scrollbar untuk playlist filter (HIDDEN - tanpa scrollbar visual) */
+        .playlist-filter-scrollbar::-webkit-scrollbar {
+          height: 0px;
+          width: 0px;
+        }
+
+        .playlist-filter-scrollbar {
+          scrollbar-width: none; /* Firefox */
+          -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        /* Scrollbar untuk antrian (elegan) */
+        .queue-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .queue-scrollbar::-webkit-scrollbar-track {
+          background: rgba(31, 41, 55, 0.5);
+          border-radius: 10px;
+        }
+
+        .queue-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(59, 130, 246, 0.6);
+          border-radius: 10px;
+        }
+
+        .queue-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(59, 130, 246, 0.8);
         }
       `}</style>
     </div>

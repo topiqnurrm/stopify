@@ -17,6 +17,8 @@ export async function GET() {
         a : "Normal",
         d : "Rap",
         e : "Phonk",
+        f : "Jawa",
+        g : "DJ",
 
         7 : "Nyanyiable",
         8 : "Hearingable",
@@ -71,6 +73,17 @@ export async function GET() {
     };
 
     const data = [
+        {
+            id: 360,
+            judul: "Tabola Bale, Silet Open Up, Jacson Seran, Juan Reza, Diva Aurel",
+            link: "https://www.youtube.com/watch?v=ztK0A6cmyRQ",
+            tahun: "2025 April 03",
+            added: "13 Desember 2025",
+            playlist : [
+                "b",
+                "2", "g", "8", "9", "g",
+            ],
+        },
         {
             id: 359,
             judul: "Sedia Aku Sebelum Hujan, Idgitaf",
@@ -227,7 +240,7 @@ export async function GET() {
             added: "20 Mei 2020",
             playlist : [
                 "b",
-                "1", "6", "8", "9", "301",
+                "1", "6", "8", "9", "301", "f",
             ],
         },
         {
@@ -304,7 +317,7 @@ export async function GET() {
             added: "30 Maret 2020",
             playlist : [
                 "b",
-                "2", "4", "8", "301", 
+                "2", "4", "8", "301", "f",
             ],
         },
         {
