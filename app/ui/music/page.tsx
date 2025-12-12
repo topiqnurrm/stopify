@@ -237,6 +237,24 @@ export default function MusicPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, [mounted, userClosedSidebar]);
 
+  // AUTO-SCROLL KE LAGU YANG SEDANG DIPUTAR SAAT SIDEBAR DIBUKA
+  useEffect(() => {
+    if (isSidebarOpen && currentSong && mounted) {
+      // Tunggu sedikit untuk memastikan DOM sudah ter-render
+      const scrollTimeout = setTimeout(() => {
+        const songElement = songListRef.current[currentSong.id];
+        if (songElement) {
+          songElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }
+      }, 300); // Delay 300ms untuk transisi sidebar
+
+      return () => clearTimeout(scrollTimeout);
+    }
+  }, [isSidebarOpen, currentSong, mounted]);
+
   const fetchSongs = async (initialQueue: Song[]) => {
   try {
     const response = await fetch('/api/music');
@@ -1180,8 +1198,22 @@ export default function MusicPage() {
   };
 
   const handleSidebarToggle = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-    setUserClosedSidebar(isSidebarOpen); 
+    const willOpen = !isSidebarOpen;
+    setIsSidebarOpen(willOpen);
+    setUserClosedSidebar(isSidebarOpen);
+    
+    // Jika sidebar akan dibuka dan ada lagu yang sedang diputar, scroll ke lagu tersebut
+    if (willOpen && currentSong && mounted) {
+      setTimeout(() => {
+        const songElement = songListRef.current[currentSong.id];
+        if (songElement) {
+          songElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }
+      }, 350); // Delay sedikit lebih lama dari transisi sidebar (300ms)
+    }
   };
 
   const handleSortChange = (criteria: SortCriteria) => {

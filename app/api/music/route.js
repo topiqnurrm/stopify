@@ -94,7 +94,7 @@ export async function GET() {
             added: "13 Desember 2020",
             playlist : [
                 "b",
-                "2", "a", "8", "60",
+                "3", "4", "8", "60",
             ],
         },
         {
@@ -105,7 +105,7 @@ export async function GET() {
             added: "8 Desember 2020",
             playlist : [
                 "b",
-                "2", "a", "8", "60",
+                "2", "d", "8", "60",
             ],
         },
         {
@@ -127,7 +127,7 @@ export async function GET() {
             added: "10 November 2020",
             playlist : [
                 "b",
-                "2", "a", "8", "60",
+                "1", "6", "8", "60",
             ],
         },
         {
@@ -138,7 +138,7 @@ export async function GET() {
             added: "27 Juli 2020",
             playlist : [
                 "b",
-                "2", "a", "8", "60",
+                "3", "4", "7", "60",
             ],
         },
         {
@@ -149,7 +149,7 @@ export async function GET() {
             added: "27 Juli 2020",
             playlist : [
                 "b",
-                "2", "a", "8", "60",
+                "1", "4", "7", "60",
             ],
         },
         {
@@ -160,7 +160,7 @@ export async function GET() {
             added: "22 Juni 2020",
             playlist : [
                 "b",
-                "2", "a", "8", "60",
+                "3", "4", "8", "60", "9"
             ],
         },
         {
@@ -171,7 +171,7 @@ export async function GET() {
             added: "22 Juni 2020",
             playlist : [
                 "b",
-                "2", "a", "8", "60",
+                "2", "5", "8", "60",
             ],
         },
         {
@@ -182,7 +182,7 @@ export async function GET() {
             added: "2 Desember 2025",
             playlist : [
                 "b",
-                "2", "a", "8", "60",
+                "2", "6", "8", "103",
             ],
         },
         {
@@ -193,7 +193,7 @@ export async function GET() {
             added: "20 Mei 2020",
             playlist : [
                 "b",
-                "2", "a", "8", "60",
+                "3", "4", "8", "60",
             ],
         },
         {
