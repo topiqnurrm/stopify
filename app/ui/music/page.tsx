@@ -613,6 +613,7 @@ export default function MusicPage() {
       { id: '6', name: 'Adrenalin' },
       { id: 'a', name: 'Normal' },
       { id: 'd', name: 'Rap' },
+      { id: 'e', name: 'Phonk' },
     ],
     jenis: [
       { id: '7', name: 'Nyanyiable' },
@@ -634,6 +635,7 @@ export default function MusicPage() {
     '6': 'Adrenalin',
     'a' : "Normal",
     'd' : "Rap",
+    'e' : "Phonk",
 
     '7': 'Nyanyiable',
     '8': 'Hearingable',
@@ -2000,7 +2002,7 @@ export default function MusicPage() {
       )}
 
       {/* GLOBAL STYLES (Penyesuaian Viewport untuk Mobile) */}
-      <style jsx global>{`
+      <style>{`
         /* Memastikan tidak ada overflow horizontal di seluruh halaman */
         html, body, #__next {
             margin: 0;
@@ -2030,7 +2032,7 @@ export default function MusicPage() {
                 height: 100dvh;
             }
             /* Memastikan antrian mobile menggunakan dvh */
-            .h-\[90dvh\] {
+            .h-\\[90dvh\\] {
                 height: 90dvh;
             }
         }
@@ -2066,7 +2068,6 @@ export default function MusicPage() {
         #youtube-player iframe {
           pointer-events: none;
         }
-
       `}</style>
     </div>
   );

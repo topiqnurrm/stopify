@@ -16,6 +16,7 @@ export async function GET() {
         6 : "Adrenalin",
         a : "Normal",
         d : "Rap",
+        e : "Phonk",
 
         7 : "Nyanyiable",
         8 : "Hearingable",
@@ -182,7 +183,7 @@ export async function GET() {
             added: "2 Desember 2025",
             playlist : [
                 "b",
-                "2", "6", "8", "103",
+                "2", "e", "8", "103",
             ],
         },
         {
@@ -358,7 +359,7 @@ export async function GET() {
             added: "30 November 2025",
             playlist : [
                 "b",
-                "2", "6", "8", "124",
+                "2", "e", "8", "124",
             ],
         },
         {
