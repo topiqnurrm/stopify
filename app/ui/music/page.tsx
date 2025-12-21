@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, List, ChevronLeft, ChevronRight, Music, Search, X, Volume2, Video, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
 
 // =========================================================
@@ -110,11 +110,8 @@ export default function MusicPage() {
   const [currentTime, setCurrentTime] = useState(0); 
   const [duration, setDuration] = useState(0);     
   const timeUpdateIntervalRef = useRef<number | null>(null); 
+  
   const playerRef = useRef<any>(null);
-  // TAMBAHKAN INI:
-  const endDetectionIntervalRef = useRef<number | null>(null);
-  const activePlaylistSongsRef = useRef<Song[]>([]);
-  const isCurrentlyPlayingFromQueueRef = useRef<boolean>(false);
 
   const [isCurrentlyPlayingFromQueue, setIsCurrentlyPlayingFromQueue] = useState(false);
   
@@ -348,7 +345,7 @@ export default function MusicPage() {
                 }
               }, 200);
             }
-  
+            
             if (timeUpdateIntervalRef.current) {
                 window.clearInterval(timeUpdateIntervalRef.current);
             }
@@ -358,83 +355,23 @@ export default function MusicPage() {
                     if (playerState === 1 || playerState === 3) { 
                         setCurrentTime(event.target.getCurrentTime());
                     }
-                    // TAMBAHAN: Deteksi jika video mendekati akhir saat minimize
-                    if (playerState === 1) {
-                      const currentTime = event.target.getCurrentTime();
-                      const duration = event.target.getDuration();
-                      // Jika tersisa < 2 detik, siapkan lagu berikutnya
-                      if (duration - currentTime < 2 && duration - currentTime > 0) {
-                        console.log('Video almost ended, preparing next song...');
-                      }
-                    }
                 } catch (e) {
                     window.clearInterval(timeUpdateIntervalRef.current as number);
                     timeUpdateIntervalRef.current = null;
                 }
             }, 1000) as number;
-            // === TAMBAHKAN KODE BARU INI SETELAH timeUpdateIntervalRef ===
-            // Polling khusus untuk deteksi video ended (setiap 2 detik)
-            if (endDetectionIntervalRef.current) {
-              window.clearInterval(endDetectionIntervalRef.current);
-            }
-            endDetectionIntervalRef.current = window.setInterval(() => {
-              try {
-                const playerState = event.target.getPlayerState();
-                const currentTime = event.target.getCurrentTime();
-                const duration = event.target.getDuration();
-                
-                // Deteksi video ended: state 0 ATAU waktu >= 99% duration
-                if (playerState === 0 || (currentTime > 0 && duration > 0 && currentTime >= duration - 1)) {
-                  console.log('[Background Polling] Video ended detected!', { state: playerState, time: currentTime, duration });
-                  window.clearInterval(endDetectionIntervalRef.current as number);
-                  endDetectionIntervalRef.current = null;
-                  
-                  // GANTI INI:
-                  // handleVideoEnded();
-                  
-                  // MENJADI INI:
-                  if (repeatModeRef.current === 'one') {
-                    console.log('[Background Polling] Repeat One - restarting video');
-                    event.target.seekTo(0);
-                    setTimeout(() => {
-                      event.target.playVideo();
-                    }, 150);
-                  } else {
-                    playNextFromRef();
-                  }
-                }
-              } catch (e) {
-                // Ignore errors
-              }
-            }, 2000) as number;
           },
           onError: (event: any) => {
-            console.error('Player Error', event.data);
-            setIsPlaying(false);
+             console.error('Player Error', event.data);
+             setIsPlaying(false);
           },
           onStateChange: (event: any) => {
-            console.log('Player state changed:', event.data); // Debug log
-            
-            // State 0 = Ended
             if (event.data === 0) {
-              console.log('Video ended, calling handleVideoEnded');
               handleVideoEnded();
-            } 
-            // State 1 = Playing
-            else if (event.data === 1) {
+            } else if (event.data === 1) {
               setIsPlaying(true);
-            } 
-            // State 2 = Paused
-            else if (event.data === 2) {
-              // Jangan set isPlaying false jika ini hasil dari auto-pause browser
-              // Cek apakah ini pause yang disengaja atau dari browser
-              if (!document.hidden) {
-                setIsPlaying(false);
-              }
-            }
-            // State 3 = Buffering - tetap anggap playing
-            else if (event.data === 3) {
-              console.log('Video buffering...');
+            } else if (event.data === 2) {
+              setIsPlaying(false);
             }
           },
         },
@@ -451,11 +388,7 @@ export default function MusicPage() {
         } catch (e) {}
       }
       if (timeUpdateIntervalRef.current) {
-        window.clearInterval(timeUpdateIntervalRef.current);
-      }
-      // TAMBAHKAN INI:
-      if (endDetectionIntervalRef.current) {
-        window.clearInterval(endDetectionIntervalRef.current);
+          window.clearInterval(timeUpdateIntervalRef.current);
       }
     };
     
@@ -491,234 +424,7 @@ export default function MusicPage() {
     return match ? match[1] : null;
   };
 
-
-  const [activePlaylistFilter, setActivePlaylistFilter] = useState<{
-    nada: string | null;
-    mood: string | null;
-    jenis: string | null;
-    likedBy: string | null;
-  } | null>(null);
-
-  // --- FUNGSI SORTING (PINDAHKAN KE SINI) ---
-  const sortSongs = (songsToSort: Song[], criteria: SortCriteria): Song[] => {
-    if (criteria === 'default') return songsToSort;
-
-    const sorted = [...songsToSort];
-    
-    switch (criteria) {
-      case 'judul-asc':
-        return sorted.sort((a, b) => a.judul.localeCompare(b.judul));
-      case 'judul-desc':
-        return sorted.sort((a, b) => b.judul.localeCompare(a.judul));
-      case 'tahun-asc':
-        return sorted.sort((a, b) => a.tahun.localeCompare(b.tahun));
-      case 'tahun-desc':
-        return sorted.sort((a, b) => b.tahun.localeCompare(a.tahun));
-      case 'added-asc':
-        return sorted.sort((a, b) => {
-          const dateA = parseIndonesianDate(a.added);
-          const dateB = parseIndonesianDate(b.added);
-          return dateA.getTime() - dateB.getTime();
-        });
-      case 'added-desc':
-        return sorted.sort((a, b) => {
-          const dateA = parseIndonesianDate(a.added);
-          const dateB = parseIndonesianDate(b.added);
-          return dateB.getTime() - dateA.getTime();
-        });
-      default:
-        return sorted;
-    }
-  };
-
-  // Filter untuk playlist yang sedang aktif (untuk next/prev)
-  const activePlaylistSongs = useMemo(() => {
-    if (!activePlaylistFilter) return songs; // Ubah dari filteredSongs ke songs
-    
-    const filtered = songs.filter(song => {
-      const matchesNada = activePlaylistFilter.nada === null || song.playlist.includes(activePlaylistFilter.nada);
-      const matchesMood = activePlaylistFilter.mood === null || song.playlist.includes(activePlaylistFilter.mood);
-      const matchesJenis = activePlaylistFilter.jenis === null || song.playlist.includes(activePlaylistFilter.jenis);
-      const matchesLikedBy = activePlaylistFilter.likedBy === null || song.playlist.includes(activePlaylistFilter.likedBy);
-      
-      return matchesLikedBy && matchesNada && matchesMood && matchesJenis;
-    });
-
-    return sortSongs(filtered, sortCriteria);
-  }, [songs, activePlaylistFilter, sortCriteria]);
-
-  
-  const playNext = () => {
-    if (!currentSong) return;
-    
-    // PERBAIKAN: Gunakan queueRef.current
-    if (isCurrentlyPlayingFromQueue && queueRef.current.length > 0) {
-      const currentIndex = queueRef.current.findIndex(s => s.id === currentSong.id);
-      console.log('playNext - Current index:', currentIndex, 'Queue length:', queueRef.current.length); // Debug
-      
-      const hasNextSong = currentIndex !== -1 && currentIndex < queueRef.current.length - 1;
-      const isLastSong = currentIndex === queueRef.current.length - 1;
-      
-      if (hasNextSong) {
-        const nextIndex = currentIndex + 1;
-        setCurrentSong(queueRef.current[nextIndex]);
-        setIsPlaying(true);
-        setIsCurrentlyPlayingFromQueue(true);
-        return;
-      }
-      
-      if (isLastSong) {
-        if (repeatModeRef.current === 'all') {
-          setCurrentSong(queueRef.current[0]);
-          setIsPlaying(true);
-          setIsCurrentlyPlayingFromQueue(true);
-          return;
-        } else {
-          setIsPlaying(false);
-          showNotification('⏹️ Antrian selesai');
-          return;
-        }
-      }
-      
-      setIsPlaying(false);
-      return;
-    }
-
-    let playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : activePlaylistSongs;
-    if (playQueue.length === 0) { 
-      setIsPlaying(false); 
-      return; 
-    }
-    
-    const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
-    
-    if (currentIndex === -1) {
-      setCurrentSong(playQueue[0]);
-      setIsPlaying(true);
-      setIsCurrentlyPlayingFromQueue(false);
-      return;
-    }
-    
-    const nextIndex = (currentIndex + 1) % playQueue.length;
-    setCurrentSong(playQueue[nextIndex]);
-    setIsPlaying(true);
-    setIsCurrentlyPlayingFromQueue(false); 
-  };
-
-  const playPrevious = () => {
-    if (!currentSong) return;
-    
-    // Hanya gunakan queue jika sedang bermain dari queue DAN queue masih ada isinya
-    if (isCurrentlyPlayingFromQueue && queue.length > 0) {
-      const currentIndex = queue.findIndex(s => s.id === currentSong.id);
-      if (currentIndex !== -1 && currentIndex > 0) {
-        // Masih ada lagu sebelumnya di queue
-        const prevIndex = currentIndex - 1;
-        setCurrentSong(queue[prevIndex]);
-        setIsPlaying(true);
-        setIsCurrentlyPlayingFromQueue(true); 
-        return; 
-      } else {
-        // Di awal queue, loop ke akhir antrian
-        setCurrentSong(queue[queue.length - 1]);
-        setIsPlaying(true);
-        setIsCurrentlyPlayingFromQueue(true);
-        return;
-      }
-    }
-    
-    // Gunakan daftar lagu (filtered atau shuffled)
-    // let playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : filteredSongs;
-    // PERBAIKAN: Gunakan active playlist songs, bukan filtered songs
-    let playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : activePlaylistSongs;
-    if (playQueue.length === 0) { setIsPlaying(false); return; }
-    
-    const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
-    const prevIndex = currentIndex === 0 ? playQueue.length - 1 : currentIndex - 1;
-    setCurrentSong(playQueue[prevIndex]);
-    setIsPlaying(true);
-    setIsCurrentlyPlayingFromQueue(false);
-  };
-
-  // TAMBAHKAN FUNGSI BARU INI SEBELUM handleVideoEnded:
-  const playNextFromRef = useCallback(() => {
-    console.log('[playNextFromRef] Called from background');
-    
-    if (!currentSong) {
-      console.log('[playNextFromRef] No current song');
-      return;
-    }
-    
-    // Gunakan REF untuk queue
-    if (isCurrentlyPlayingFromQueueRef.current && queueRef.current.length > 0) {
-      const currentIndex = queueRef.current.findIndex(s => s.id === currentSong.id);
-      console.log('[playNextFromRef] Queue mode - index:', currentIndex);
-      
-      const hasNextSong = currentIndex !== -1 && currentIndex < queueRef.current.length - 1;
-      const isLastSong = currentIndex === queueRef.current.length - 1;
-      
-      if (hasNextSong) {
-        const nextIndex = currentIndex + 1;
-        const nextSong = queueRef.current[nextIndex];
-        console.log('[playNextFromRef] Playing next queue song:', nextSong.judul);
-        setCurrentSong(nextSong);
-        setIsPlaying(true);
-        setIsCurrentlyPlayingFromQueue(true);
-        return;
-      }
-      
-      if (isLastSong) {
-        if (repeatModeRef.current === 'all') {
-          console.log('[playNextFromRef] Queue ended, repeating');
-          setCurrentSong(queueRef.current[0]);
-          setIsPlaying(true);
-          setIsCurrentlyPlayingFromQueue(true);
-          return;
-        } else {
-          console.log('[playNextFromRef] Queue ended, stopping');
-          setIsPlaying(false);
-          return;
-        }
-      }
-      
-      setIsPlaying(false);
-      return;
-    }
-
-    // Gunakan REF untuk playlist
-    const playQueue = (isShuffledRef.current && shuffledOrderRef.current.length > 0) 
-      ? shuffledOrderRef.current 
-      : activePlaylistSongsRef.current;
-      
-    console.log('[playNextFromRef] Playlist mode - queue length:', playQueue.length);
-    
-    if (playQueue.length === 0) {
-      console.log('[playNextFromRef] No songs in playlist');
-      setIsPlaying(false);
-      return;
-    }
-    
-    const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
-    console.log('[playNextFromRef] Current index in playlist:', currentIndex);
-    
-    if (currentIndex === -1) {
-      console.log('[playNextFromRef] Song not found, playing first');
-      setCurrentSong(playQueue[0]);
-      setIsPlaying(true);
-      setIsCurrentlyPlayingFromQueue(false);
-      return;
-    }
-    
-    const nextIndex = (currentIndex + 1) % playQueue.length;
-    const nextSong = playQueue[nextIndex];
-    
-    console.log('[playNextFromRef] Playing next song:', nextSong.judul);
-    setCurrentSong(nextSong);
-    setIsPlaying(true);
-    setIsCurrentlyPlayingFromQueue(false);
-  }, [currentSong]); // Dependency hanya currentSong
-
-  const handleVideoEnded = useCallback(() => {
+  const handleVideoEnded = () => {
     const currentRepeatMode = repeatModeRef.current;
     const currentIsShuffled = isShuffledRef.current;
     const currentShuffledOrder = shuffledOrderRef.current;
@@ -726,10 +432,13 @@ export default function MusicPage() {
     console.log('Video ended. Repeat mode from ref:', currentRepeatMode, 'Shuffle:', currentIsShuffled, 'ShuffledOrder length:', currentShuffledOrder.length);
     
     // PERBAIKAN KRUSIAL: Validasi konsistensi shuffle state
+    // Jika shuffle false TAPI shuffledOrder masih ada isi (state transitional), 
+    // paksa kosongkan dan gunakan mode normal
     if (!currentIsShuffled && currentShuffledOrder.length > 0) {
       console.warn('Inconsistent shuffle state detected! Forcing normal mode.');
-      shuffledOrderRef.current = [];
-      setShuffledOrder([]);
+      shuffledOrderRef.current = []; // Paksa kosongkan
+      setShuffledOrder([]); // Sync state
+      // Lanjutkan ke mode normal di bawah
     }
     
     if (currentRepeatMode === 'one') {
@@ -765,7 +474,12 @@ export default function MusicPage() {
       return;
     }
     
+    // PERBAIKAN: Gunakan shuffledOrderRef.current yang sudah pasti konsisten
     const validShuffledOrder = shuffledOrderRef.current;
+
+    // PENGECEKAN TAMBAHAN: Jika lagu saat ini ada di shuffledOrder TAPI shuffle sudah dimatikan
+    // Artinya ini lagu hasil shuffle yang sedang diputar, tapi user sudah matikan shuffle
+    // PAKSA gunakan mode normal untuk lagu berikutnya
     const isCurrentSongFromOldShuffle = 
       !currentIsShuffled && 
       validShuffledOrder.length > 0 && 
@@ -773,10 +487,13 @@ export default function MusicPage() {
 
     if (isCurrentSongFromOldShuffle) {
       console.warn('Current song is from old shuffle, but shuffle is now OFF. Using normal mode.');
+      // Kosongkan shuffled order SEGERA
       shuffledOrderRef.current = [];
       setShuffledOrder([]);
+      // Lanjut ke mode normal di bawah (jangan return!)
     }
 
+    // Shuffle mode - HARUS memenuhi KEDUA kondisi DAN bukan dari old shuffle
     if (currentIsShuffled === true && validShuffledOrder.length > 0 && !isCurrentSongFromOldShuffle) {
       console.log('Using shuffle mode');
       const currentIndex = validShuffledOrder.findIndex(s => s.id === currentSong.id);
@@ -805,12 +522,14 @@ export default function MusicPage() {
       return;
     }
 
+    // Mode normal (tidak shuffle, tidak repeat)
     console.log('Using normal mode (no shuffle)');
     const playQueue = activePlaylistSongs;
     if (playQueue.length > 0) {
       const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
       if (currentIndex !== -1 && currentIndex < playQueue.length - 1) {
         console.log('Playing next song in normal order');
+        // PERBAIKAN: Langsung set lagu berikutnya tanpa memanggil playNext()
         const nextIndex = currentIndex + 1;
         setCurrentSong(playQueue[nextIndex]);
         setIsPlaying(true);
@@ -822,7 +541,39 @@ export default function MusicPage() {
     } else {
       setIsPlaying(false);
     }
-  }, [currentSong, isCurrentlyPlayingFromQueue, activePlaylistSongs, playNext]);
+  };
+
+  // --- FUNGSI SORTING ---
+  const sortSongs = (songsToSort: Song[], criteria: SortCriteria): Song[] => {
+    if (criteria === 'default') return songsToSort;
+
+    const sorted = [...songsToSort];
+    
+    switch (criteria) {
+      case 'judul-asc':
+        return sorted.sort((a, b) => a.judul.localeCompare(b.judul));
+      case 'judul-desc':
+        return sorted.sort((a, b) => b.judul.localeCompare(a.judul));
+      case 'tahun-asc':
+        return sorted.sort((a, b) => a.tahun.localeCompare(b.tahun));
+      case 'tahun-desc':
+        return sorted.sort((a, b) => b.tahun.localeCompare(a.tahun));
+      case 'added-asc':
+        return sorted.sort((a, b) => {
+          const dateA = parseIndonesianDate(a.added);
+          const dateB = parseIndonesianDate(b.added);
+          return dateA.getTime() - dateB.getTime();
+        });
+      case 'added-desc':
+        return sorted.sort((a, b) => {
+          const dateA = parseIndonesianDate(a.added);
+          const dateB = parseIndonesianDate(b.added);
+          return dateB.getTime() - dateA.getTime();
+        });
+      default:
+        return sorted;
+    }
+  };
 
   // --- FILTERING DAN SORTING DENGAN useMemo ---
   const filteredSongs = useMemo(() => {
@@ -858,6 +609,7 @@ export default function MusicPage() {
     ],
     mood: [
       { id: '4', name: 'Sedih' },
+      { id: 'i', name: 'Rock' },
       { id: '5', name: 'Bahagia' },
       { id: '6', name: 'Adrenalin' },
       { id: 'a', name: 'Normal' },
@@ -865,6 +617,7 @@ export default function MusicPage() {
       { id: 'e', name: 'Phonk' },
       { id: 'f', name: 'Jawa' },
       { id: 'g', name: 'DJ' },
+      { id: 'h', name: 'Love' },
     ],
     jenis: [
       { id: '7', name: 'Nyanyiable' },
@@ -882,6 +635,7 @@ export default function MusicPage() {
     '3': 'Nada Santai',
 
     '4': 'Sedih',
+    'i' : "Rock",
     '5': 'Bahagia',
     '6': 'Adrenalin',
     'a' : "Normal",
@@ -889,6 +643,7 @@ export default function MusicPage() {
     'e' : "Phonk",
     'f' : "Jawa",
     'g' : "DJ",
+    'h' : "Love",
 
     '7': 'Nyanyiable',
     '8': 'Hearingable',
@@ -1193,6 +948,98 @@ export default function MusicPage() {
     setIsPlaying(!isPlaying);
   };
 
+  const playNext = () => {
+    if (!currentSong) return;
+    
+    // PERBAIKAN: Gunakan queueRef.current
+    if (isCurrentlyPlayingFromQueue && queueRef.current.length > 0) {
+      const currentIndex = queueRef.current.findIndex(s => s.id === currentSong.id);
+      console.log('playNext - Current index:', currentIndex, 'Queue length:', queueRef.current.length); // Debug
+      
+      const hasNextSong = currentIndex !== -1 && currentIndex < queueRef.current.length - 1;
+      const isLastSong = currentIndex === queueRef.current.length - 1;
+      
+      if (hasNextSong) {
+        const nextIndex = currentIndex + 1;
+        setCurrentSong(queueRef.current[nextIndex]);
+        setIsPlaying(true);
+        setIsCurrentlyPlayingFromQueue(true);
+        return;
+      }
+      
+      if (isLastSong) {
+        if (repeatModeRef.current === 'all') {
+          setCurrentSong(queueRef.current[0]);
+          setIsPlaying(true);
+          setIsCurrentlyPlayingFromQueue(true);
+          return;
+        } else {
+          setIsPlaying(false);
+          showNotification('⏹️ Antrian selesai');
+          return;
+        }
+      }
+      
+      setIsPlaying(false);
+      return;
+    }
+
+    let playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : activePlaylistSongs;
+    if (playQueue.length === 0) { 
+      setIsPlaying(false); 
+      return; 
+    }
+    
+    const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
+    
+    if (currentIndex === -1) {
+      setCurrentSong(playQueue[0]);
+      setIsPlaying(true);
+      setIsCurrentlyPlayingFromQueue(false);
+      return;
+    }
+    
+    const nextIndex = (currentIndex + 1) % playQueue.length;
+    setCurrentSong(playQueue[nextIndex]);
+    setIsPlaying(true);
+    setIsCurrentlyPlayingFromQueue(false); 
+  };
+
+  const playPrevious = () => {
+    if (!currentSong) return;
+    
+    // Hanya gunakan queue jika sedang bermain dari queue DAN queue masih ada isinya
+    if (isCurrentlyPlayingFromQueue && queue.length > 0) {
+      const currentIndex = queue.findIndex(s => s.id === currentSong.id);
+      if (currentIndex !== -1 && currentIndex > 0) {
+        // Masih ada lagu sebelumnya di queue
+        const prevIndex = currentIndex - 1;
+        setCurrentSong(queue[prevIndex]);
+        setIsPlaying(true);
+        setIsCurrentlyPlayingFromQueue(true); 
+        return; 
+      } else {
+        // Di awal queue, loop ke akhir antrian
+        setCurrentSong(queue[queue.length - 1]);
+        setIsPlaying(true);
+        setIsCurrentlyPlayingFromQueue(true);
+        return;
+      }
+    }
+    
+    // Gunakan daftar lagu (filtered atau shuffled)
+    // let playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : filteredSongs;
+    // PERBAIKAN: Gunakan active playlist songs, bukan filtered songs
+    let playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : activePlaylistSongs;
+    if (playQueue.length === 0) { setIsPlaying(false); return; }
+    
+    const currentIndex = playQueue.findIndex(s => s.id === currentSong.id);
+    const prevIndex = currentIndex === 0 ? playQueue.length - 1 : currentIndex - 1;
+    setCurrentSong(playQueue[prevIndex]);
+    setIsPlaying(true);
+    setIsCurrentlyPlayingFromQueue(false);
+  };
+
   // TAMBAHKAN USEEFFECT BARU INI setelah useEffect auto re-shuffle:
 
   const toggleShuffle = () => {
@@ -1317,52 +1164,6 @@ export default function MusicPage() {
     queueRef.current = queue;
   }, [queue]);
 
-  useEffect(() => {
-    activePlaylistSongsRef.current = activePlaylistSongs;
-  }, [activePlaylistSongs]);
-
-  useEffect(() => {
-    isCurrentlyPlayingFromQueueRef.current = isCurrentlyPlayingFromQueue;
-  }, [isCurrentlyPlayingFromQueue]);
-
-  // --- HANDLE PAGE VISIBILITY CHANGE (ENHANCED) ---
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden && playerRef.current && isPlayerReady) {
-        // Page visible kembali
-        try {
-          const playerState = playerRef.current.getPlayerState();
-          console.log('Visibility changed, player state:', playerState);
-          
-          // State 2 = paused, 5 = cued (video loaded but not playing)
-          if (isPlaying && (playerState === 2 || playerState === 5)) {
-            console.log('Resuming playback after visibility change');
-            playerRef.current.playVideo();
-          }
-          
-          // Jika video sudah ended (state 0) saat minimize, trigger next song
-          if (playerState === 0) {
-            console.log('Video was ended while minimized, playing next...');
-            handleVideoEnded();
-          }
-        } catch (e) {
-          console.error('Error checking player state:', e);
-        }
-      } else if (document.hidden && isPlaying) {
-        // Page di-minimize, pastikan audio tetap berjalan
-        console.log('Page minimized but should keep playing');
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [isPlaying, isPlayerReady]);
-
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const seekTime = parseInt(e.target.value, 10);
     setCurrentTime(seekTime);
@@ -1441,6 +1242,29 @@ export default function MusicPage() {
     
     showNotification(`📊 ${sortLabels[criteria]}`);
   };
+
+  const [activePlaylistFilter, setActivePlaylistFilter] = useState<{
+    nada: string | null;
+    mood: string | null;
+    jenis: string | null;
+    likedBy: string | null;
+  } | null>(null);
+
+  // Filter untuk playlist yang sedang aktif (untuk next/prev)
+  const activePlaylistSongs = useMemo(() => {
+    if (!activePlaylistFilter) return filteredSongs;
+    
+    const filtered = songs.filter(song => {
+      const matchesNada = activePlaylistFilter.nada === null || song.playlist.includes(activePlaylistFilter.nada);
+      const matchesMood = activePlaylistFilter.mood === null || song.playlist.includes(activePlaylistFilter.mood);
+      const matchesJenis = activePlaylistFilter.jenis === null || song.playlist.includes(activePlaylistFilter.jenis);
+      const matchesLikedBy = activePlaylistFilter.likedBy === null || song.playlist.includes(activePlaylistFilter.likedBy);
+      
+      return matchesLikedBy && matchesNada && matchesMood && matchesJenis;
+    });
+
+    return sortSongs(filtered, sortCriteria);
+  }, [songs, activePlaylistFilter, sortCriteria]);
 
   // Tambahkan useEffect baru setelah useEffect yang ada
   useEffect(() => {

@@ -19,6 +19,7 @@ export async function GET() {
         e : "Phonk",
         f : "Jawa",
         g : "DJ",
+        h : "Love",
 
         7 : "Nyanyiable",
         8 : "Hearingable",
@@ -112,6 +113,117 @@ export async function GET() {
             ],
         },
         {
+            id: 50,
+            judul: "It’s My Life, Bon Jovi",
+            link: "https://www.youtube.com/watch?v=smvXQO7Lmxk",
+            tahun: "2018 Januari 01",
+            added: "17 Januari 2021",
+            playlist : [
+                "b",
+                "2", "6", "8", "60", "i",
+            ],
+        },
+        {
+            id: 49,
+            judul: "Happy Pills, Weathers",
+            link: "https://www.youtube.com/watch?v=Y7Hpn-iYJq0",
+            tahun: "2018 Januari 01",
+            added: "4 Januari 2021",
+            playlist : [
+                "b",
+                "2", "5", "8", "60",
+            ],
+        },
+        {
+            id: 48,
+            judul: "Head on My Shoulder, David Alexander",
+            link: "https://www.youtube.com/watch?v=aQ5B4tKLh8M",
+            tahun: "2018 Januari 01",
+            added: "4 Januari 2021",
+            playlist : [
+                "b",
+                "3", "4", "8", "60", "h",
+            ],
+        },
+        {
+            id: 47,
+            judul: "Montagem Supersonic, KHAOS, Jmilton, Mc Jajá",
+            link: "https://www.youtube.com/watch?v=ugTlOuU99MM",
+            tahun: "2018 Januari 01",
+            added: "1 Januari 2021",
+            playlist : [
+                "b",
+                "2", "e", "6", "8", "124",
+            ],
+        },
+        {
+            id: 46,
+            judul: "Corduroy Dreams, Rex Orange County",
+            link: "https://www.youtube.com/watch?v=qpKrzv22o04",
+            tahun: "2018 Januari 01",
+            added: "25 Desember 2020",
+            playlist : [
+                "b",
+                "3", "5", "8", "60", "h",
+            ],
+        },
+        {
+            id: 45,
+            judul: "ill come back to you (feat. Sarcastic Sounds & Rxseboy)",
+            link: "https://www.youtube.com/watch?v=I78gRj2UHWM",
+            tahun: "2018 Januari 01",
+            added: "23 Desember 2020",
+            playlist : [
+                "b",
+                "2", "4", 'd', "8", "60", "h",
+            ],
+        },
+        {
+            id: 44,
+            judul: "When we were 16, Rxseboy, Powfu, Mishaal Tamer",
+            link: "https://www.youtube.com/watch?v=36rUC4bCKmc",
+            tahun: "2018 Januari 01",
+            added: "22 Desember 2020",
+            playlist : [
+                "b",
+                "2", '4', "d", "8", "60", "h",
+            ],
+        },
+        {
+            id: 43,
+            judul: "Figurinha - Ao Vivo, Douglas & Vinicius, MC Bruninho",
+            link: "https://www.youtube.com/watch?v=FkiEvrIdRUM",
+            tahun: "2018 Januari 01",
+            added: "22 Desember 2020",
+            playlist : [
+                "b",
+                "3", "a", "7", "124",
+            ],
+        },
+
+        {
+            id: 42,
+            judul: "Holding On, Ian Dior",
+            link: "https://www.youtube.com/watch?v=1LNdE9QTjSM",
+            tahun: "2018 Januari 01",
+            added: "19 Desember 2020",
+            playlist : [
+                "b",
+                "2", "4", "8", "60", "h",
+            ],
+        },
+        {
+            id: 41,
+            judul: "ACELERADA, sma$her, MXZI",
+            link: "https://www.youtube.com/watch?v=qvaTvGSEIcg",
+            tahun: "2018 Januari 01",
+            added: "13 Desember 2020",
+            playlist : [
+                "b",
+                "2", "e", "6", "8", "124",
+            ],
+        },
+        {
             id: 40,
             judul: "Fool, Cavetown",
             link: "https://www.youtube.com/watch?v=5jfZB3z9BZs",
@@ -130,7 +242,7 @@ export async function GET() {
             added: "8 Desember 2020",
             playlist : [
                 "b",
-                "2", "d", "8", "60",
+                "2", "d", "8", "60", "h",
             ],
         },
         {
@@ -152,7 +264,7 @@ export async function GET() {
             added: "10 November 2020",
             playlist : [
                 "b",
-                "1", "6", "8", "60",
+                "1", "6", "8", "60", "i",
             ],
         },
         {
@@ -196,7 +308,7 @@ export async function GET() {
             added: "22 Juni 2020",
             playlist : [
                 "b",
-                "2", "5", "8", "60",
+                "2", "5", "8", "60", "h",
             ],
         },
         {
@@ -229,7 +341,7 @@ export async function GET() {
             added: "20 Mei 2020",
             playlist : [
                 "b",
-                "2", "a", "8", "60",
+                "2", "a", "8", "60", "h",
             ],
         },
         {
@@ -328,7 +440,7 @@ export async function GET() {
             added: "30 Maret 2020",
             playlist : [
                 "b",
-                "2", "5", "8", "9",
+                "2", "5", "7", "9",
             ],
         },
         {
@@ -339,7 +451,7 @@ export async function GET() {
             added: "30 Maret 2020",
             playlist : [
                 "b",
-                "2", "5", "8", "9",
+                "2", "5", "8", "9", "h",
             ],
         },
         {
@@ -361,7 +473,7 @@ export async function GET() {
             added: "30 Maret 2020",
             playlist : [
                 "b",
-                "3", "a", "8", "60",
+                "3", "a", "8", "60", "h",
             ],
         },
         {
@@ -405,7 +517,7 @@ export async function GET() {
             added: "25 Maret 2020",
             playlist : [
                 "b",
-                "3", "a", "7", "9",
+                "3", "a", "7", "9", "h",
             ],
         },
         {
@@ -416,7 +528,7 @@ export async function GET() {
             added: "25 Maret 2020",
             playlist : [
                 "b",
-                "1", "5", "8", "10",
+                "1", "5", "8", "10", "h",
             ],
         },
         {
@@ -427,7 +539,7 @@ export async function GET() {
             added: "25 Maret 2020",
             playlist : [
                 "b",
-                "3", "4", "8", "9",
+                "3", "4", "8", "9"
             ],
         },
         {
@@ -438,7 +550,7 @@ export async function GET() {
             added: "25 Maret 2020",
             playlist : [
                 "b",
-                "3", "4", "7", "9",
+                "3", "4", "7", "9", "h",
             ],
         },
         {
@@ -449,7 +561,7 @@ export async function GET() {
             added: "25 Maret 2020",
             playlist : [
                 "b",
-                "3", "4", "8", "60",
+                "3", "4", "8", "60", "h",
             ],
         },
         {
@@ -471,7 +583,7 @@ export async function GET() {
             added: "25 Maret 2020",
             playlist : [
                 "b",
-                "3", "5", "7", "9",
+                "3", "5", "7", "9", "h",
             ],
         },
         {
@@ -482,7 +594,7 @@ export async function GET() {
             added: "25 Maret 2020",
             playlist : [
                 "b",
-                "2", "a", "8", "60",
+                "2", "a", "8", "60", "h",
             ],
         },
         {
@@ -493,7 +605,7 @@ export async function GET() {
             added: "25 Maret 2020",
             playlist : [
                 "b",
-                "3", "a", "8", "60",
+                "3", "a", "8", "60", "h",
             ],
         },
         {
@@ -504,7 +616,7 @@ export async function GET() {
             added: "25 Maret 2020",
             playlist : [
                 "b",
-                "2", "4", "7", "60",
+                "2", "4", "7", "60", "h",
             ],
         },
         {
@@ -515,7 +627,7 @@ export async function GET() {
             added: "25 Maret 2020",
             playlist : [
                 "b",
-                "2", "d", "7", "60",
+                "2", "d", "7", "60", "h",
             ],
         },
         {
@@ -526,7 +638,7 @@ export async function GET() {
             added: "25 Maret 2020",
             playlist : [
                 "b",
-                "2", "d", "7", "60",
+                "2", "d", "7", "60", "h",
             ],
         },
         {
@@ -540,7 +652,7 @@ export async function GET() {
             added: "25 Maret 2020",
             playlist : [
                 "b",
-                "3", "a", "8", "60",
+                "3", "a", "8", "60", "h",
             ],
         },
         {
@@ -558,7 +670,7 @@ export async function GET() {
             added: "25 Maret 2020",
             playlist : [
                 "b",
-                "2", "d", "8", "60",
+                "2", "d", "8", "60", "h",
             ],
         },
     ];
