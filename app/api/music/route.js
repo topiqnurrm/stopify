@@ -116,7 +116,7 @@ export async function GET() {
             id: 50,
             judul: "It’s My Life, Bon Jovi",
             link: "https://www.youtube.com/watch?v=smvXQO7Lmxk",
-            tahun: "2018 Januari 01",
+            tahun: "2000 Mei 23",
             added: "17 Januari 2021",
             playlist : [
                 "b",
@@ -127,7 +127,7 @@ export async function GET() {
             id: 49,
             judul: "Happy Pills, Weathers",
             link: "https://www.youtube.com/watch?v=Y7Hpn-iYJq0",
-            tahun: "2018 Januari 01",
+            tahun: "2016 Juni 03",
             added: "4 Januari 2021",
             playlist : [
                 "b",
@@ -138,7 +138,7 @@ export async function GET() {
             id: 48,
             judul: "Head on My Shoulder, David Alexander",
             link: "https://www.youtube.com/watch?v=aQ5B4tKLh8M",
-            tahun: "2018 Januari 01",
+            tahun: "2020 Februari 14",
             added: "4 Januari 2021",
             playlist : [
                 "b",
@@ -149,8 +149,8 @@ export async function GET() {
             id: 47,
             judul: "Montagem Supersonic, KHAOS, Jmilton, Mc Jajá",
             link: "https://www.youtube.com/watch?v=ugTlOuU99MM",
-            tahun: "2018 Januari 01",
-            added: "1 Januari 2021",
+            tahun: "2025 Juli 04",
+            added: "21 Desember 2025",
             playlist : [
                 "b",
                 "2", "e", "6", "8", "124",
@@ -160,7 +160,7 @@ export async function GET() {
             id: 46,
             judul: "Corduroy Dreams, Rex Orange County",
             link: "https://www.youtube.com/watch?v=qpKrzv22o04",
-            tahun: "2018 Januari 01",
+            tahun: "2016 November 07",
             added: "25 Desember 2020",
             playlist : [
                 "b",
@@ -171,7 +171,7 @@ export async function GET() {
             id: 45,
             judul: "ill come back to you (feat. Sarcastic Sounds & Rxseboy)",
             link: "https://www.youtube.com/watch?v=I78gRj2UHWM",
-            tahun: "2018 Januari 01",
+            tahun: "2020 Mei 29",
             added: "23 Desember 2020",
             playlist : [
                 "b",
@@ -182,7 +182,7 @@ export async function GET() {
             id: 44,
             judul: "When we were 16, Rxseboy, Powfu, Mishaal Tamer",
             link: "https://www.youtube.com/watch?v=36rUC4bCKmc",
-            tahun: "2018 Januari 01",
+            tahun: "2019 Oktober 06",
             added: "22 Desember 2020",
             playlist : [
                 "b",
@@ -193,19 +193,18 @@ export async function GET() {
             id: 43,
             judul: "Figurinha - Ao Vivo, Douglas & Vinicius, MC Bruninho",
             link: "https://www.youtube.com/watch?v=FkiEvrIdRUM",
-            tahun: "2018 Januari 01",
+            tahun: "2020 Juni 12",
             added: "22 Desember 2020",
             playlist : [
                 "b",
                 "3", "a", "7", "124",
             ],
         },
-
         {
             id: 42,
             judul: "Holding On, Ian Dior",
             link: "https://www.youtube.com/watch?v=1LNdE9QTjSM",
-            tahun: "2018 Januari 01",
+            tahun: "2020 November 20",
             added: "19 Desember 2020",
             playlist : [
                 "b",
@@ -216,8 +215,8 @@ export async function GET() {
             id: 41,
             judul: "ACELERADA, sma$her, MXZI",
             link: "https://www.youtube.com/watch?v=qvaTvGSEIcg",
-            tahun: "2018 Januari 01",
-            added: "13 Desember 2020",
+            tahun: "2025 Juni 27",
+            added: "21 Desember 2025",
             playlist : [
                 "b",
                 "2", "e", "6", "8", "124",
