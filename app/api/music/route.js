@@ -82,7 +82,7 @@ export async function GET() {
             added: "13 Desember 2025",
             playlist : [
                 "b",
-                "2", "g", "8", "9", "g",
+                "2", "g", "8", "9",
             ],
         },
         {
@@ -93,7 +93,7 @@ export async function GET() {
             added: "13 Desember 2025",
             playlist : [
                 "b",
-                "3", "5", "7", "9",
+                "3", "h", "7", "9",
             ],
         },
         {
@@ -110,6 +110,61 @@ export async function GET() {
             playlist : [
                 "b",
                 "1", "6", "7", "60",
+            ],
+        },
+        {
+            id: 55,
+            judul: "Papi Chulo, Octavian, Skepta",
+            link: "https://www.youtube.com/watch?v=ABAoyB16RJs",
+            tahun: "2020 Maret 13",
+            added: "7 Maret 2021",
+            playlist : [
+                "b",
+                "2", "d", "8", "60",
+            ],
+        },
+        {
+            id: 54,
+            judul: "Hurts So Good, Astrid S",
+            link: "https://www.youtube.com/watch?v=mGij0v2SOVg",
+            tahun: "2016 Mei 6",
+            added: "7 Maret 2021",
+            playlist : [
+                "b",
+                "3", "4", "8", "60", "1",
+            ],
+        },
+        {
+            id: 53,
+            judul: "Mood (feat. Ian dior), 24kGoldn, iann dior",
+            link: "https://www.youtube.com/watch?v=FaKK34QDBKw",
+            tahun: "2020 Agustus 5",
+            added: "5 Maret 2021",
+            playlist : [
+                "b",
+                "2", "5", "8", "60", "d",
+            ],
+        },
+        {
+            id: 52,
+            judul: "Katakan Saja, Khifnu",
+            link: "https://www.youtube.com/watch?v=zqz7TOtDgWE",
+            tahun: "2020 Maret 1",
+            added: "4 Maret 2021",
+            playlist : [
+                "b",
+                "3", "h", "8", "9",
+            ],
+        },
+        {
+            id: 51,
+            judul: "Snowman, Sia",
+            link: "https://www.youtube.com/watch?v=KL_g3CS-Ffs",
+            tahun: "2017 November 9",
+            added: "4 Maret 2021",
+            playlist : [
+                "b",
+                "3", "h", "8", "60",
             ],
         },
         {
