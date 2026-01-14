@@ -113,6 +113,60 @@ export async function GET() {
             ],
         },
         {
+            id: 60,
+            judul: "Papi Chulo, Octavian, Skepta",
+            link: "https://www.youtube.com/watch?v=ABAoyB16RJs",
+            tahun: "2020 Maret 13",
+            added: "7 Maret 2021",
+            playlist : [
+                "b",
+                "2", "d", "8", "60",
+            ],
+        },
+        {
+            id: 59,
+            judul: "Papi Chulo, Octavian, Skepta",
+            link: "https://www.youtube.com/watch?v=ABAoyB16RJs",
+            tahun: "2020 Maret 13",
+            added: "7 Maret 2021",
+            playlist : [
+                "b",
+                "2", "d", "8", "60",
+            ],
+        },
+        {
+            id: 58,
+            judul: "Papi Chulo, Octavian, Skepta",
+            link: "https://www.youtube.com/watch?v=ABAoyB16RJs",
+            tahun: "2020 Maret 13",
+            added: "7 Maret 2021",
+            playlist : [
+                "b",
+                "2", "d", "8", "60",
+            ],
+        },
+        {
+            id: 57,
+            judul: "Papi Chulo, Octavian, Skepta",
+            link: "https://www.youtube.com/watch?v=ABAoyB16RJs",
+            tahun: "2020 Maret 13",
+            added: "7 Maret 2021",
+            playlist : [
+                "b",
+                "2", "d", "8", "60",
+            ],
+        },
+        {
+            id: 56,
+            judul: "Papi Chulo, Octavian, Skepta",
+            link: "https://www.youtube.com/watch?v=ABAoyB16RJs",
+            tahun: "2020 Maret 13",
+            added: "7 Maret 2021",
+            playlist : [
+                "b",
+                "2", "d", "8", "60",
+            ],
+        },{
             id: 55,
             judul: "Papi Chulo, Octavian, Skepta",
             link: "https://www.youtube.com/watch?v=ABAoyB16RJs",
