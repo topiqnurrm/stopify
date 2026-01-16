@@ -618,10 +618,12 @@ export default function MusicPage() {
       { id: 'f', name: 'Jawa' },
       { id: 'g', name: 'DJ' },
       { id: 'h', name: 'Love' },
+      { id: 'j', name: 'Classic' },
     ],
     jenis: [
       { id: '7', name: 'Nyanyiable' },
       { id: '8', name: 'Hearingable' },
+      { id: 'k', name: 'Else' },
     ],
   };
   
@@ -634,6 +636,7 @@ export default function MusicPage() {
     '2': 'Nada Cepat',
     '3': 'Nada Santai',
 
+    "j" : "Classic",
     '4': 'Sedih',
     'i' : "Rock",
     '5': 'Bahagia',
@@ -647,6 +650,7 @@ export default function MusicPage() {
 
     '7': 'Nyanyiable',
     '8': 'Hearingable',
+    'k' : "Else",
 
     // ... negara-negara
 
