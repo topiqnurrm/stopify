@@ -162,7 +162,7 @@ export async function GET() {
         {
             id: 61,
             judul: "Before I Forget, Slipknot",
-            link: "https://www.youtube.com/watch?v=9JxQrmfv-3s",
+            link: "https://www.youtube.com/watch?v=ssg1Ak9PMn4",
             tahun: "2009 Oktober 27",
             added: "8 Maret 2021",
             playlist : [
@@ -189,7 +189,7 @@ export async function GET() {
             added: "7 Maret 2021",
             playlist : [
                 "b",
-                "2", "d", "8", "60",
+                "2", "d", "7", "60",
             ],
         },
         {
@@ -221,7 +221,7 @@ export async function GET() {
             tahun: "2008 September 12",
             added: "7 Maret 2021",
             playlist : [
-                "b",
+                "b", "c",
                 "3", "h", "8", "60",
             ],
         },{
@@ -243,7 +243,7 @@ export async function GET() {
             added: "7 Maret 2021",
             playlist : [
                 "b",
-                "3", "4", "8", "60", "1",
+                "3", "4", "7", "60", "1",
             ],
         },
         {
@@ -254,7 +254,7 @@ export async function GET() {
             added: "5 Maret 2021",
             playlist : [
                 "b",
-                "2", "5", "8", "60", "d",
+                "2", "5", "7", "60", "d",
             ],
         },
         {
@@ -265,7 +265,7 @@ export async function GET() {
             added: "4 Maret 2021",
             playlist : [
                 "b",
-                "3", "h", "8", "9",
+                "1", "h", "7", "9",
             ],
         },
         {
@@ -276,7 +276,7 @@ export async function GET() {
             added: "4 Maret 2021",
             playlist : [
                 "b",
-                "3", "h", "8", "60",
+                "3", "h", "7", "60",
             ],
         },
         {
