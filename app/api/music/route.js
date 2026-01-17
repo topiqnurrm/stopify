@@ -116,6 +116,61 @@ export async function GET() {
             ],
         },
         {
+            id: 70,
+            judul: "Old Town Road, Lil Nas X",
+            link: "https://www.youtube.com/watch?v=wje0gdzlGus",
+            tahun: "2019 Juli 19",
+            playlist : [
+                "b",
+                "2", "6", "d", "8", "60",
+            ],
+            added: "14 Maret 2021",
+        },
+        {
+            id: 69,
+            judul: "Leave The Door Open, Bruno Mars, Anderson.Paak, Silk Sonic",
+            link: "https://www.youtube.com/watch?v=_A3lQdNY5yw",
+            tahun: "2021 Maret 5",
+            added: "11 Maret 2021",
+            playlist : [
+                "b",
+                "1", "a", "7", "60",
+            ],
+        },
+        {
+            id: 68,
+            judul: "Lose, NIKI",
+            link: "https://www.youtube.com/watch?v=J5eE1YYinTM",
+            tahun: "2020 Agustus 13",
+            added: "11 Maret 2021",
+            playlist : [
+                "b",
+                "1", "4", "7", "60",
+            ],
+        },
+        {
+            id: 67,
+            judul: "Melukis Senja, Budi Doremi",
+            link: "https://www.youtube.com/watch?v=fd0iauNvJVo",
+            tahun: "2020 Juni 24",
+            added: "11 Maret 2021",
+            playlist : [
+                "b",
+                "1", "5", "7", "9",
+            ],
+        },
+        {
+            id: 66,
+            judul: "One Only, Pamungkas",
+            link: "https://www.youtube.com/watch?v=jFtYHwrPhpM",
+            tahun: "2018 Juli 15",
+            added: "11 Maret 2021",
+            playlist : [
+                "b",
+                "3", "4", "k", "60",
+            ],
+        },
+        {
             id: 65,
             judul: "Heather, Conan Gray",
             link: "https://www.youtube.com/watch?v=bj3HnriNscw",
