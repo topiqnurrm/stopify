@@ -319,13 +319,13 @@ export default function MusicPage() {
         videoId: videoId,
         playerVars: {
           autoplay: 0, 
-          controls: 0,  // Ubah dari 1 ke 0 untuk nonaktifkan kontrol bawaan
-          disablekb: 1,  // Ubah dari 0 ke 1 untuk disable keyboard
-          fs: 0,  // Ubah dari 1 ke 0 untuk disable fullscreen
+          controls: 0,  // Tetap 0 untuk nonaktifkan kontrol bawaan
+          disablekb: 1,  // Tetap 1 untuk disable keyboard
+          fs: 1,  // UBAH ke 1 untuk ENABLE fullscreen
           modestbranding: 1,
           playsinline: 1,
           rel: 0,
-          iv_load_policy: 3,  // Tambahkan: Disable annotations
+          iv_load_policy: 3,
           origin: playerOrigin 
         },
         events: {
@@ -2111,14 +2111,25 @@ export default function MusicPage() {
           background-color: #2d3748;
         }
 
-        /* Disable interaksi pada YouTube player */
+        /* Allow fullscreen button interaction only */
         #youtube-player {
-          pointer-events: none;
+          pointer-events: auto;
         }
 
-        /* Jika ada iframe di dalam youtube-player */
         #youtube-player iframe {
-          pointer-events: none;
+          pointer-events: auto;
+        }
+
+        /* Overlay to block most interactions except fullscreen */
+        #youtube-player::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 40px; /* Leave space for fullscreen button at bottom */
+          z-index: 1;
+          pointer-events: auto;
         }
 
         /* ===== CUSTOM SCROLLBAR STYLES ===== */
