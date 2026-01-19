@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, List, ChevronLeft, ChevronRight, Music, Search, X, Volume2, Video, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, List, ChevronLeft, ChevronRight, Music, Search, X, Volume2, Video, ChevronUp, ChevronDown, ArrowUpDown, Maximize, Minimize } from 'lucide-react';
 
 // =========================================================
 // KOREKSI TYPEDEFS DENGAN DECLARATION MERGING
@@ -122,6 +122,9 @@ export default function MusicPage() {
   const [sortCriteria, setSortCriteria] = useState<SortCriteria>('default');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [isFilterExpanded, setIsFilterExpanded] = useState(true);
+  
+  // STATE UNTUK FULLSCREEN
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // --- WAKE LOCK LOGIC ---
   const requestWakeLock = async () => {
@@ -148,6 +151,64 @@ export default function MusicPage() {
           console.log('Wake Lock dilepaskan secara manual.');
       }
   };
+
+  // --- FULLSCREEN LOGIC (YouTube Player) ---
+  const toggleFullscreen = () => {
+    // Cek mode terlebih dahulu
+    if (mode === 'audio') {
+      showNotification('⚠️ Fullscreen hanya tersedia di mode video');
+      return;
+    }
+
+    // Cek player ready
+    if (!playerRef.current || !isPlayerReady) {
+      showNotification('⚠️ Player belum siap');
+      return;
+    }
+
+    try {
+      // Cari container video player (bukan iframe langsung)
+      const playerContainer = document.querySelector('#youtube-player');
+      
+      if (!playerContainer) {
+        showNotification('⚠️ Video player tidak ditemukan');
+        console.error('Player container not found');
+        return;
+      }
+
+      if (!document.fullscreenElement) {
+        // Masuk fullscreen
+        playerContainer.requestFullscreen().then(() => {
+          setIsFullscreen(true);
+          showNotification('🖥️ Video Fullscreen');
+        }).catch((err) => {
+          console.error('Fullscreen request error:', err);
+          showNotification('❌ Fullscreen gagal: ' + err.message);
+        });
+      } else {
+        // Keluar fullscreen
+        document.exitFullscreen().then(() => {
+          setIsFullscreen(false);
+          showNotification('🪟 Keluar dari Fullscreen');
+        }).catch((err) => {
+          console.error('Exit fullscreen error:', err);
+        });
+      }
+    } catch (err) {
+      console.error('Fullscreen error:', err);
+      showNotification('❌ Browser tidak mendukung fullscreen');
+    }
+  };
+
+  // Listener untuk perubahan fullscreen dari tombol ESC
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   // Sync repeatModeRef dengan repeatMode state
   useEffect(() => {
@@ -319,13 +380,13 @@ export default function MusicPage() {
         videoId: videoId,
         playerVars: {
           autoplay: 0, 
-          controls: 0,  // Tetap 0 untuk nonaktifkan kontrol bawaan
-          disablekb: 1,  // Tetap 1 untuk disable keyboard
-          fs: 1,  // UBAH ke 1 untuk ENABLE fullscreen
+          controls: 0,  // Ubah dari 1 ke 0 untuk nonaktifkan kontrol bawaan
+          disablekb: 1,  // Ubah dari 0 ke 1 untuk disable keyboard
+          fs: 0,  // Ubah dari 1 ke 0 untuk disable fullscreen
           modestbranding: 1,
           playsinline: 1,
           rel: 0,
-          iv_load_policy: 3,
+          iv_load_policy: 3,  // Tambahkan: Disable annotations
           origin: playerOrigin 
         },
         events: {
@@ -1920,6 +1981,16 @@ export default function MusicPage() {
                         </span>
                       )}
                     </button>
+
+                    <button 
+                      onClick={toggleFullscreen}
+                      className={`p-1 md:p-2 rounded hover:bg-gray-700 transition-colors ${
+                        isFullscreen ? 'text-blue-500' : ''
+                      }`}
+                      title={isFullscreen ? 'Keluar dari Fullscreen' : 'Fullscreen'}
+                    >
+                      {isFullscreen ? <Minimize size={16} className="md:w-5 md:h-5" /> : <Maximize size={16} className="md:w-5 md:h-5" />}
+                    </button>
                 </div>
                 
                 <div className="hidden md:block w-40 order-3"> {/* Spacer agar kontrol di tengah */}</div>
@@ -2111,25 +2182,14 @@ export default function MusicPage() {
           background-color: #2d3748;
         }
 
-        /* Allow fullscreen button interaction only */
+        /* Disable interaksi pada YouTube player */
         #youtube-player {
-          pointer-events: auto;
+          pointer-events: none;
         }
 
+        /* Jika ada iframe di dalam youtube-player */
         #youtube-player iframe {
-          pointer-events: auto;
-        }
-
-        /* Overlay to block most interactions except fullscreen */
-        #youtube-player::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 40px; /* Leave space for fullscreen button at bottom */
-          z-index: 1;
-          pointer-events: auto;
+          pointer-events: none;
         }
 
         /* ===== CUSTOM SCROLLBAR STYLES ===== */
