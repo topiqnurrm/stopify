@@ -6,31 +6,85 @@ import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, List, ChevronLeft,
 // ✅ Import config
 import { getAllMusicEndpoints, PLAYLIST_NAMES } from '@/lib/musicConfig';
 
-const fetchSongs = async (initialQueue: Song[]) => {
-  try {
-    const endpoints = getAllMusicEndpoints();
-    
-    const responses = await Promise.all(
-      endpoints.map(endpoint => 
-        fetch(endpoint)
-          .then(res => res.ok ? res.json() : [])
-          .catch(err => {
-            console.warn(`Failed to fetch ${endpoint}:`, err);
-            return [];
-          })
-      )
-    );
+// ===== GOOGLE ANALYTICS 4 CONFIGURATION =====
+const GA_MEASUREMENT_ID = 'G-PZ1HRPEQYF';
 
-    const allSongs = responses.flat();
-    const uniqueSongs = Array.from(
-      new Map(allSongs.map(song => [song.id, song])).values()
-    );
-    
-    // ... rest of the code
-  } catch (error) {
-    console.error('Error fetching songs:', error);
+// ===== UMAMI ANALYTICS CONFIGURATION =====
+const UMAMI_WEBSITE_ID = '7eae54fd-2694-45fc-9f8a-d126a0c936f5';
+const UMAMI_SRC = 'https://cloud.umami.is/script.js';
+
+// Load Google Analytics Script
+const loadGoogleAnalytics = () => {
+  if (typeof window === 'undefined') return;
+  
+  // Script 1: gtag.js
+  const script1 = document.createElement('script');
+  script1.async = true;
+  script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+  document.head.appendChild(script1);
+  
+  // Script 2: Configuration
+  const script2 = document.createElement('script');
+  script2.innerHTML = `
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '${GA_MEASUREMENT_ID}', {
+      page_path: window.location.pathname,
+    });
+  `;
+  document.head.appendChild(script2);
+  
+  console.log('✅ Google Analytics loaded');
+};
+
+// Helper function untuk tracking events
+const trackEvent = (eventName: string, eventParams?: Record<string, any>) => {
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    (window as any).gtag('event', eventName, eventParams);
+    console.log('📊 GA Event:', eventName, eventParams);
   }
 };
+// ===== END GOOGLE ANALYTICS =====
+
+// ===== UMAMI ANALYTICS =====
+const loadUmamiAnalytics = () => {
+  if (typeof window === 'undefined') return;
+  
+  // Cek apakah script sudah ada
+  const existingScript = document.querySelector(`script[data-website-id="${UMAMI_WEBSITE_ID}"]`);
+  if (existingScript) {
+    console.log('✅ Umami already loaded');
+    return;
+  }
+  
+  // Load Umami script
+  const script = document.createElement('script');
+  script.async = true;
+  script.defer = true;
+  script.src = UMAMI_SRC;
+  script.setAttribute('data-website-id', UMAMI_WEBSITE_ID);
+  script.setAttribute('data-auto-track', 'true');
+  script.setAttribute('data-domains', 'stopify-mocha.vercel.app');
+  document.head.appendChild(script);
+  
+  script.onload = () => {
+    console.log('✅ Umami Analytics loaded');
+  };
+  
+  script.onerror = () => {
+    console.error('❌ Failed to load Umami Analytics');
+  };
+};
+
+// Helper function untuk tracking events Umami
+const trackUmamiEvent = (eventName: string, eventData?: Record<string, any>) => {
+  if (typeof window !== 'undefined' && (window as any).umami) {
+    (window as any).umami.track(eventName, eventData);
+    console.log('📊 Umami Event:', eventName, eventData);
+  }
+};
+// ===== END UMAMI ANALYTICS =====
 
 // =========================================================
 // KOREKSI TYPEDEFS DENGAN DECLARATION MERGING
@@ -41,6 +95,9 @@ declare global {
     onYouTubeIframeAPIReady: () => void;
     setInterval: (handler: TimerHandler, timeout?: number | undefined, ...args: any[]) => number;
     clearInterval: (handle: number | undefined) => void;
+    gtag: (...args: any[]) => void;        
+    dataLayer: any[];
+    umami: any;  // ✅ TAMBAHKAN BARIS INI
   }
 }
 
@@ -372,6 +429,9 @@ export default function MusicPage() {
     if (typeof window !== 'undefined') {
       const initialQueue = loadQueueFromLocalStorage();
       setQueue(initialQueue);
+      
+      loadGoogleAnalytics(); // ✅ TAMBAHKAN BARIS INI
+      loadUmamiAnalytics(); // ✅ TAMBAHKAN BARIS INI
       
       // TAMBAHAN: Load preferensi kualitas
       const savedQuality = localStorage.getItem('preferredQuality');
@@ -934,10 +994,28 @@ export default function MusicPage() {
   };
 
   const togglePlaylistSelection = (groupKey: 'nada' | 'mood' | 'jenis' | 'likedBy', playlistId: string) => {
-    setSelectedPlaylists(prev => ({
-      ...prev,
-      [groupKey]: prev[groupKey] === playlistId ? null : playlistId
-    }));
+    setSelectedPlaylists(prev => {
+      const newValue = prev[groupKey] === playlistId ? null : playlistId;
+      
+      // ✅ TAMBAHKAN INI
+      if (newValue !== null) {
+        trackEvent('filter_applied', {
+          filter_type: groupKey,
+          filter_value: getPlaylistName(playlistId)
+        });
+        
+        // ✅ TAMBAHKAN INI
+        trackUmamiEvent('filter_applied', {
+          type: groupKey,
+          value: getPlaylistName(playlistId)
+        });
+      }
+      
+      return {
+        ...prev,
+        [groupKey]: newValue
+      };
+    });
   };
 
   const clearAllFilters = () => {
@@ -958,6 +1036,20 @@ export default function MusicPage() {
   };
 
   const togglePlay = () => {
+    if (!isPlaying && currentSong) {
+      trackEvent('play_song', {
+        song_title: currentSong.judul,
+        song_year: currentSong.tahun || 'unknown',
+        playlist: currentSong.playlist?.join(', ') || 'none'
+      });
+      
+      // ✅ TAMBAHKAN INI
+      trackUmamiEvent('play_song', {
+        song: currentSong.judul,
+        year: currentSong.tahun
+      });
+    }
+    
     // PERBAIKAN: Cek apakah playlist sudah selesai (lagu terakhir + tidak playing + bukan dari queue)
     if (!isPlaying && currentSong && !isCurrentlyPlayingFromQueue) {
       const playQueue = (isShuffled && shuffledOrder.length > 0) ? shuffledOrder : activePlaylistSongs;
@@ -1747,6 +1839,19 @@ export default function MusicPage() {
                         } else {
                           // Lagu berbeda, ganti dan play
                           setCurrentSong(song); 
+                          
+                          trackEvent('change_song', {
+                            song_title: song.judul,
+                            song_year: song.tahun,
+                            playlist: song.playlist?.join(', ')
+                          });
+                          
+                          // ✅ TAMBAHKAN INI
+                          trackUmamiEvent('change_song', {
+                            song: song.judul,
+                            year: song.tahun
+                          });
+                          
                           setIsPlaying(true); 
                         }
                         setIsCurrentlyPlayingFromQueue(false);

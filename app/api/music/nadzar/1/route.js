@@ -15,7 +15,7 @@ export async function GET() {
             id: "l19",
             judul: " Creepy Nuts - Bling Bang Bang Born", 
             link: "https://www.youtube.com/watch?v=_b_OjkAjF0Q",
-            tahun: " 2024 January 07",
+            tahun: "2024 January 07",
             playlist : [
                 "l",
             ],
@@ -61,7 +61,7 @@ export async function GET() {
             id: "l14",
             judul: " Jennie - Like Jennie", 
             link: "https://www.youtube.com/watch?v=6DBtz2enWSA", 
-            tahun: " 2025 March  07",
+            tahun: "2025 March 07",
             playlist : [
                 "l",
             ],
@@ -88,7 +88,7 @@ export async function GET() {
             id: "l11",
             judul: " Lisa - Rockstar", 
             link: "https://www.youtube.com/watch?v=4S24P3VYVmQ", 
-            tahun: " 2025 February 28",
+            tahun: "2025 February 28",
             playlist : [
                 "l",
             ],
@@ -115,7 +115,7 @@ export async function GET() {
             id: "l8",
             judul: "Eve - Kaikai Kitan", 
             link: "https://www.youtube.com/watch?v=mpJIBY6eg-8", 
-            tahun: " 2020 Desember 23",
+            tahun: "2020 Desember 23",
             playlist : [
                 "l",
             ],
