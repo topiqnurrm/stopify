@@ -1,7 +1,36 @@
 'use client';
 
+
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, List, ChevronLeft, ChevronRight, Music, Search, X, Volume2, Video, ChevronUp, ChevronDown, ArrowUpDown, Maximize, Minimize } from 'lucide-react';
+// ✅ Import config
+import { getAllMusicEndpoints, PLAYLIST_NAMES } from '@/lib/musicConfig';
+
+const fetchSongs = async (initialQueue: Song[]) => {
+  try {
+    const endpoints = getAllMusicEndpoints();
+    
+    const responses = await Promise.all(
+      endpoints.map(endpoint => 
+        fetch(endpoint)
+          .then(res => res.ok ? res.json() : [])
+          .catch(err => {
+            console.warn(`Failed to fetch ${endpoint}:`, err);
+            return [];
+          })
+      )
+    );
+
+    const allSongs = responses.flat();
+    const uniqueSongs = Array.from(
+      new Map(allSongs.map(song => [song.id, song])).values()
+    );
+    
+    // ... rest of the code
+  } catch (error) {
+    console.error('Error fetching songs:', error);
+  }
+};
 
 // =========================================================
 // KOREKSI TYPEDEFS DENGAN DECLARATION MERGING
@@ -17,13 +46,13 @@ declare global {
 
 // Interface Song
 interface Song {
-  id: number;
+  id: string | number;  // ← PERBAIKAN: Support both
   judul: string;
   link: string;
-  tahun: string;
-  playlist: string[];
-  added: string;
-  negara?: string; // Tambahan field negara
+  tahun?: string;
+  playlist?: string[];
+  added?: string;
+  negara?: string;
 }
 
 type SortCriteria = 'default' | 'judul-asc' | 'judul-desc' | 'tahun-asc' | 'tahun-desc' | 'added-asc' | 'added-desc';
@@ -125,6 +154,16 @@ export default function MusicPage() {
   
   // STATE UNTUK FULLSCREEN
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // TAMBAHAN BARU - Quality Management
+  const [availableQualities, setAvailableQualities] = useState<string[]>([]);
+  const [currentQuality, setCurrentQuality] = useState<string>('auto');
+  const [showQualityMenu, setShowQualityMenu] = useState(false);
+  const qualityCheckIntervalRef = useRef<number | null>(null);
+
+  // TAMBAHAN BARU: Simpan preferensi kualitas user
+  const [preferredQuality, setPreferredQuality] = useState<string>('auto');
+  const qualityRetryCountRef = useRef<number>(0);
 
   // --- WAKE LOCK LOGIC ---
   const requestWakeLock = async () => {
@@ -200,6 +239,76 @@ export default function MusicPage() {
     }
   };
 
+  const changeQuality = (quality: string) => {
+    if (!playerRef.current || !isPlayerReady) {
+      showNotification('⚠️ Player belum siap');
+      return;
+    }
+
+    if (mode === 'audio') {
+      showNotification('⚠️ Kualitas hanya tersedia di mode video');
+      return;
+    }
+
+    try {
+      const qualityLabels: Record<string, string> = {
+        'highres': '4K/8K',
+        'hd2160': '4K',
+        'hd1440': '2K',
+        'hd1080': '1080p',
+        'hd720': '720p',
+        'large': '480p',
+        'medium': '360p',
+        'small': '240p',
+        'tiny': '144p',
+        'auto': 'Auto'
+      };
+
+      // PERBAIKAN KRUSIAL: Gunakan loadVideoById untuk memaksa kualitas
+      const videoId = getYoutubeVideoId(currentSong!.link);
+      const currentTime = playerRef.current.getCurrentTime();
+      const wasPlaying = isPlaying;
+      
+      // Simpan preferensi kualitas
+      setPreferredQuality(quality);
+      localStorage.setItem('preferredQuality', quality);
+      
+      // METODE 1: Reload video dengan kualitas yang dipilih
+      if (quality !== 'auto') {
+        playerRef.current.loadVideoById({
+          videoId: videoId,
+          startSeconds: currentTime,
+          suggestedQuality: quality
+        });
+      } else {
+        // Untuk auto, cukup set playback quality
+        playerRef.current.setPlaybackQuality('default');
+      }
+      
+      // Tunggu video dimuat dan restore state
+      setTimeout(() => {
+        if (playerRef.current) {
+          const actualQuality = playerRef.current.getPlaybackQuality();
+          setCurrentQuality(actualQuality);
+          
+          if (wasPlaying) {
+            playerRef.current.playVideo();
+          } else {
+            playerRef.current.pauseVideo();
+          }
+          
+          showNotification(`✅ Kualitas: ${qualityLabels[actualQuality] || actualQuality}`);
+        }
+      }, 1000);
+      
+      setShowQualityMenu(false);
+      
+    } catch (err) {
+      console.error('Quality change error:', err);
+      showNotification('❌ Gagal mengubah kualitas');
+    }
+  };
+
   // Listener untuk perubahan fullscreen dari tombol ESC
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -259,23 +368,31 @@ export default function MusicPage() {
   };
 
   // Mount & Load
-  useEffect(() => {
+    useEffect(() => {
     if (typeof window !== 'undefined') {
-        const initialQueue = loadQueueFromLocalStorage();
-        setQueue(initialQueue);
-        
-        const tag = document.createElement('script');
-        tag.src = 'https://www.youtube.com/iframe_api';
-        const firstScriptTag = document.getElementsByTagName('script')[0];
-        if (firstScriptTag && firstScriptTag.parentNode) {
-          firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-        }
-
-        window.onYouTubeIframeAPIReady = () => {
-          console.log('YouTube API Ready');
-        };
-
-        fetchSongs(initialQueue); 
+      const initialQueue = loadQueueFromLocalStorage();
+      setQueue(initialQueue);
+      
+      // TAMBAHAN: Load preferensi kualitas
+      const savedQuality = localStorage.getItem('preferredQuality');
+      if (savedQuality) {
+        setPreferredQuality(savedQuality);
+        console.log('Loaded preferred quality:', savedQuality);
+      }
+      
+      // ✅ PERBAIKAN: PANGGIL fetchSongs untuk load data lagu
+      fetchSongs(initialQueue);
+      
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      if (firstScriptTag && firstScriptTag.parentNode) {
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      }
+      
+      window.onYouTubeIframeAPIReady = () => {
+        console.log('YouTube API Ready');
+      };
     }
     setMounted(true);
   }, []);
@@ -298,6 +415,42 @@ export default function MusicPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, [mounted, userClosedSidebar]);
 
+  // Listener untuk perubahan fullscreen dari tombol ESC
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // TAMBAHAN BARU: Close quality menu saat klik di luar
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (showQualityMenu && !target.closest('.quality-menu-container')) {
+        setShowQualityMenu(false);
+      }
+    };
+
+    if (showQualityMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showQualityMenu]);
+
+  // TAMBAHAN BARU: Cleanup quality monitoring saat unmount
+  useEffect(() => {
+    return () => {
+      if (qualityCheckIntervalRef.current) {
+        window.clearInterval(qualityCheckIntervalRef.current);
+        qualityCheckIntervalRef.current = null;
+      }
+    };
+  }, []);
+
   // AUTO-SCROLL KE LAGU YANG SEDANG DIPUTAR SAAT SIDEBAR DIBUKA
   useEffect(() => {
     if (isSidebarOpen && currentSong && mounted) {
@@ -316,35 +469,60 @@ export default function MusicPage() {
     }
   }, [isSidebarOpen, currentSong, mounted]);
 
+  // ✅ PERBAIKAN: fetchSongs
   const fetchSongs = async (initialQueue: Song[]) => {
-  try {
-    const response = await fetch('/api/music');
-    const data: Song[] = await response.json();
-    
-    const songsWithCountry = data.map(song => {
-      // Ambil SEMUA playlist negara (9-999)
-      const countryPlaylists = song.playlist.filter(p => {
-        const num = parseInt(p);
-        return num >= 9 && num <= 999;
+    try {
+      const endpoints = getAllMusicEndpoints();
+      
+      console.log('Fetching from endpoints:', endpoints); // Debug
+      
+      const responses = await Promise.all(
+        endpoints.map(endpoint => 
+          fetch(endpoint)
+            .then(res => {
+              console.log(`Response from ${endpoint}:`, res.ok); // Debug
+              return res.ok ? res.json() : [];
+            })
+            .catch(err => {
+              console.error(`Failed to fetch ${endpoint}:`, err);
+              return [];
+            })
+        )
+      );
+
+      console.log('All responses:', responses); // Debug
+
+      // Gabungkan semua data
+      const allSongs = responses.flat();
+      console.log('Total songs before dedup:', allSongs.length); // Debug
+      
+      // Hapus duplikat berdasarkan ID (support string & number)
+      const uniqueSongs = Array.from(
+        new Map(allSongs.map(song => [String(song.id), song])).values()
+      );
+      
+      console.log('Unique songs:', uniqueSongs.length); // Debug
+      
+      const songsWithCountry = uniqueSongs.map(song => {
+        const countryPlaylists = song.playlist 
+          ? song.playlist.filter((p: string) => {
+              const num = parseInt(p);
+              return num >= 9 && num <= 999;
+            })
+          : [];
+        
+        const negaraString = countryPlaylists.length > 0 
+          ? countryPlaylists.map((p: string) => getPlaylistName(p)).join(', ')
+          : undefined;
+        
+        return {
+          ...song,
+          negara: negaraString
+        };
       });
-      
-      // Gabungkan semua nama negara dengan koma
-      const negaraString = countryPlaylists.length > 0 
-        ? countryPlaylists.map(p => getPlaylistName(p)).join(', ')
-        : undefined;
-      
-      return {
-        ...song,
-        negara: negaraString
-      };
-    });
-      
+        
       setSongs(songsWithCountry);
-      // Hanya set lagu pertama tanpa memaksa dari queue
-      // if (!currentSong && songsWithCountry.length > 0) {
-      //   setCurrentSong(songsWithCountry[0]);
-      //   setIsCurrentlyPlayingFromQueue(false);
-      // }
+      console.log('Songs set:', songsWithCountry.length); // Debug
     } catch (error) {
       console.error('Error fetching songs:', error);
     }
@@ -380,13 +558,13 @@ export default function MusicPage() {
         videoId: videoId,
         playerVars: {
           autoplay: 0, 
-          controls: 0,  // Ubah dari 1 ke 0 untuk nonaktifkan kontrol bawaan
-          disablekb: 1,  // Ubah dari 0 ke 1 untuk disable keyboard
-          fs: 0,  // Ubah dari 1 ke 0 untuk disable fullscreen
+          controls: 1,  // ✅ Aktifkan kontrol YouTube
+          disablekb: 0,  // ✅ Aktifkan keyboard shortcuts
+          fs: 1,  // ✅ Aktifkan tombol fullscreen YouTube
           modestbranding: 1,
           playsinline: 1,
           rel: 0,
-          iv_load_policy: 3,  // Tambahkan: Disable annotations
+          iv_load_policy: 3,
           origin: playerOrigin 
         },
         events: {
@@ -394,9 +572,42 @@ export default function MusicPage() {
             setIsPlayerReady(true); 
             event.target.setVolume(volume);
             
-            setDuration(event.target.getDuration()); 
+            setDuration(event.target.getDuration());
             
-            // TAMBAHAN: Auto-play jika isPlaying true
+            // Setup kualitas video
+            const qualities = event.target.getAvailableQualityLevels();
+            console.log('Available qualities:', qualities);
+            setAvailableQualities(qualities);
+            
+            // Load preferensi kualitas
+            const savedQuality = localStorage.getItem('preferredQuality') || preferredQuality;
+            setPreferredQuality(savedQuality);
+            
+            // Get initial quality
+            const initialQuality = event.target.getPlaybackQuality();
+            console.log('Initial quality:', initialQuality, 'Preferred:', savedQuality);
+            setCurrentQuality(initialQuality || 'auto');
+            
+            // PERBAIKAN: JANGAN apply quality di onReady secara paksa
+            // Quality akan di-apply saat user memilih dari menu
+            // Atau saat loadVideoById dipanggil dengan suggestedQuality
+            
+            // Start quality monitoring (TETAP DIPERLUKAN untuk update UI)
+            if (qualityCheckIntervalRef.current) {
+              window.clearInterval(qualityCheckIntervalRef.current);
+            }
+            qualityCheckIntervalRef.current = window.setInterval(() => {
+              try {
+                const currentQ = event.target.getPlaybackQuality();
+                if (currentQ) {
+                  setCurrentQuality(currentQ);
+                }
+              } catch (e) {
+                console.error('Quality check error:', e);
+              }
+            }, 2000) as number;
+            
+            // Auto-play jika isPlaying true
             if (isPlaying) {
               setTimeout(() => {
                 try {
@@ -407,19 +618,20 @@ export default function MusicPage() {
               }, 200);
             }
             
+            // Start time tracking
             if (timeUpdateIntervalRef.current) {
-                window.clearInterval(timeUpdateIntervalRef.current);
+              window.clearInterval(timeUpdateIntervalRef.current);
             }
             timeUpdateIntervalRef.current = window.setInterval(() => {
-                try {
-                    const playerState = event.target.getPlayerState();
-                    if (playerState === 1 || playerState === 3) { 
-                        setCurrentTime(event.target.getCurrentTime());
-                    }
-                } catch (e) {
-                    window.clearInterval(timeUpdateIntervalRef.current as number);
-                    timeUpdateIntervalRef.current = null;
+              try {
+                const playerState = event.target.getPlayerState();
+                if (playerState === 1 || playerState === 3) { 
+                  setCurrentTime(event.target.getCurrentTime());
                 }
+              } catch (e) {
+                window.clearInterval(timeUpdateIntervalRef.current as number);
+                timeUpdateIntervalRef.current = null;
+              }
             }, 1000) as number;
           },
           onError: (event: any) => {
@@ -429,12 +641,27 @@ export default function MusicPage() {
           onStateChange: (event: any) => {
             if (event.data === 0) {
               handleVideoEnded();
-            } else if (event.data === 1) {
+            } else if (event.data === 1) { // PLAYING
               setIsPlaying(true);
-            } else if (event.data === 2) {
+              
+              // HAPUS bagian enforce saat playing - tidak efektif
+              // Cukup update current quality saja
+              try {
+                const actualQuality = event.target.getPlaybackQuality();
+                setCurrentQuality(actualQuality);
+              } catch (e) {
+                console.error('Quality update error:', e);
+              }
+            } else if (event.data === 2) { // PAUSED
               setIsPlaying(false);
+            } else if (event.data === 3) { // BUFFERING
+              // HAPUS bagian enforce saat buffering - tidak efektif
+              try {
+                const availableQ = event.target.getAvailableQualityLevels();
+                setAvailableQualities(availableQ);
+              } catch (e) {}
             }
-          },
+          }
         },
       });
     }
@@ -449,7 +676,12 @@ export default function MusicPage() {
         } catch (e) {}
       }
       if (timeUpdateIntervalRef.current) {
-          window.clearInterval(timeUpdateIntervalRef.current);
+        window.clearInterval(timeUpdateIntervalRef.current);
+      }
+      // TAMBAHAN: Cleanup quality monitoring
+      if (qualityCheckIntervalRef.current) {
+        window.clearInterval(qualityCheckIntervalRef.current);
+        qualityCheckIntervalRef.current = null;
       }
     };
     
@@ -612,23 +844,31 @@ export default function MusicPage() {
     
     switch (criteria) {
       case 'judul-asc':
-        return sorted.sort((a, b) => a.judul.localeCompare(b.judul));
+        return sorted.sort((a, b) => a.judul.localeCompare(b.judul, 'id', { sensitivity: 'base' }));
       case 'judul-desc':
-        return sorted.sort((a, b) => b.judul.localeCompare(a.judul));
+        return sorted.sort((a, b) => b.judul.localeCompare(a.judul, 'id', { sensitivity: 'base' }));
       case 'tahun-asc':
-        return sorted.sort((a, b) => a.tahun.localeCompare(b.tahun));
+        return sorted.sort((a, b) => {
+          const yearA = a.tahun || '0';
+          const yearB = b.tahun || '0';
+          return yearA.localeCompare(yearB);
+        });
       case 'tahun-desc':
-        return sorted.sort((a, b) => b.tahun.localeCompare(a.tahun));
+        return sorted.sort((a, b) => {
+          const yearA = a.tahun || '0';
+          const yearB = b.tahun || '0';
+          return yearB.localeCompare(yearA);
+        });
       case 'added-asc':
         return sorted.sort((a, b) => {
-          const dateA = parseIndonesianDate(a.added);
-          const dateB = parseIndonesianDate(b.added);
+          const dateA = parseIndonesianDate(a.added || '1 Januari 1970');
+          const dateB = parseIndonesianDate(b.added || '1 Januari 1970');
           return dateA.getTime() - dateB.getTime();
         });
       case 'added-desc':
         return sorted.sort((a, b) => {
-          const dateA = parseIndonesianDate(a.added);
-          const dateB = parseIndonesianDate(b.added);
+          const dateA = parseIndonesianDate(a.added || '1 Januari 1970');
+          const dateB = parseIndonesianDate(b.added || '1 Januari 1970');
           return dateB.getTime() - dateA.getTime();
         });
       default:
@@ -639,18 +879,17 @@ export default function MusicPage() {
   // --- FILTERING DAN SORTING DENGAN useMemo ---
   const filteredSongs = useMemo(() => {
     const filtered = songs.filter(song => {
-      // Filter berdasarkan grup playlist (kombinasi AND antar grup)
-      const matchesNada = selectedPlaylists.nada === null || song.playlist.includes(selectedPlaylists.nada);
-      const matchesMood = selectedPlaylists.mood === null || song.playlist.includes(selectedPlaylists.mood);
-      const matchesJenis = selectedPlaylists.jenis === null || song.playlist.includes(selectedPlaylists.jenis);
-      const matchesLikedBy = selectedPlaylists.likedBy === null || song.playlist.includes(selectedPlaylists.likedBy);
-      
+      const matchesNada = selectedPlaylists.nada === null || (song.playlist && song.playlist.includes(selectedPlaylists.nada));
+      const matchesMood = selectedPlaylists.mood === null || (song.playlist && song.playlist.includes(selectedPlaylists.mood));
+      const matchesJenis = selectedPlaylists.jenis === null || (song.playlist && song.playlist.includes(selectedPlaylists.jenis));
+      const matchesLikedBy = selectedPlaylists.likedBy === null || (song.playlist && song.playlist.includes(selectedPlaylists.likedBy));
+
       const matchesSearch = searchQuery === '' || 
         song.judul.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        song.tahun.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        song.added.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (song.tahun && song.tahun.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (song.added && song.added.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (song.negara && song.negara.toLowerCase().includes(searchQuery.toLowerCase()));
-      
+
       return matchesLikedBy && matchesNada && matchesMood && matchesJenis && matchesSearch;
     });
 
@@ -662,6 +901,7 @@ export default function MusicPage() {
     likedBy: [
       { id: 'b', name: 'Taufiq' },
       { id: 'c', name: 'Nadya' },
+      { id: 'l', name: 'Nadzar' },
     ],
     nada: [
       { id: '1', name: 'Nada Tinggi' },
@@ -687,261 +927,10 @@ export default function MusicPage() {
       { id: 'k', name: 'Else' },
     ],
   };
-  
-  // Mapping nomor playlist ke nama
-  const playlistNames: { [key: string]: string } = { 
-    'b': 'Taufiq',
-    'c': 'Nadya',
 
-    '1': 'Nada Tinggi',
-    '2': 'Nada Cepat',
-    '3': 'Nada Santai',
-
-    "j" : "Classic",
-    '4': 'Sedih',
-    'i' : "Rock",
-    '5': 'Bahagia',
-    '6': 'Adrenalin',
-    'a' : "Normal",
-    'd' : "Rap",
-    'e' : "Phonk",
-    'f' : "Jawa",
-    'g' : "DJ",
-    'h' : "Love",
-
-    '7': 'Nyanyiable',
-    '8': 'Hearingable',
-    'k' : "Else",
-
-    // ... negara-negara
-
-    // --- Asia Tenggara, Timur, dan Selatan ---
-    '9': 'Indonesia',
-    '10': 'Korea Selatan',
-    '11': 'Jepang',
-    '12': 'Barat (Kategori Umum)',
-    '13': 'Tiongkok',
-    '14': 'Filipina',
-    '15': 'Vietnam',
-    '16': 'Thailand',
-    '17': 'Malaysia',
-    '18': 'Singapura',
-    '19': 'Myanmar',
-    '20': 'Kamboja',
-    '21': 'Laos',
-    '22': 'Brunei',
-    '23': 'Timor Leste',
-    '24': 'Korea Utara',
-    '25': 'India',
-    '26': 'Pakistan',
-    '27': 'Bangladesh',
-    '28': 'Nepal',
-    '29': 'Sri Lanka',
-    '30': 'Maladewa',
-    '31': 'Bhutan',
-    
-    // --- Asia Tengah dan Barat (Timur Tengah) ---
-    '32': 'Afganistan',
-    '33': 'Kazakhstan',
-    '34': 'Uzbekistan',
-    '35': 'Turkmenistan',
-    '36': 'Kirgistan',
-    '37': 'Tajikistan',
-    '38': 'Iran',
-    '39': 'Irak',
-    '40': 'Arab Saudi',
-    '41': 'Uni Emirat Arab',
-    '42': 'Qatar',
-    '43': 'Bahrain',
-    '44': 'Kuwait',
-    '45': 'Oman',
-    '46': 'Yaman',
-    '47': 'Suriah',
-    '48': 'Yordania',
-    '49': 'Lebanon',
-    '50': 'Israel',
-    '51': 'Palestina (Negara pengamat PBB)',
-    '52': 'Turki',
-    '53': 'Siprus',
-    '54': 'Georgia',
-    '55': 'Armenia',
-    '56': 'Azerbaijan',
-    
-    // --- Eropa Utara dan Barat ---
-    '57': 'Rusia',
-    '58': 'Jerman',
-    '59': 'Prancis',
-    '60': 'Inggris Raya',
-    '61': 'Italia',
-    '62': 'Spanyol',
-    '63': 'Belanda',
-    '64': 'Belgia',
-    '65': 'Luksemburg',
-    '66': 'Swiss',
-    '67': 'Austria',
-    '68': 'Irlandia',
-    '69': 'Portugal',
-    '70': 'Norwegia',
-    '71': 'Swedia',
-    '72': 'Finlandia',
-    '73': 'Islandia',
-    '74': 'Denmark',
-    '75': 'Estonia',
-    '76': 'Latvia',
-    '77': 'Lituania',
-
-    // --- Eropa Selatan, Timur, dan Balkan ---
-    '78': 'Polandia',
-    '79': 'Ceko',
-    '80': 'Slowakia',
-    '81': 'Hungaria',
-    '82': 'Rumania',
-    '83': 'Bulgaria',
-    '84': 'Yunani',
-    '85': 'Albania',
-    '86': 'Kroasia',
-    '87': 'Serbia',
-    '88': 'Bosnia dan Herzegovina',
-    '89': 'Montenegro',
-    '90': 'Makedonia Utara',
-    '91': 'Slovenia',
-    '92': 'Malta',
-    '93': 'San Marino',
-    '94': 'Vatikan',
-    '95': 'Monako',
-    '96': 'Andorra',
-    '97': 'Liechtenstein',
-    '98': 'Moldova',
-    '99': 'Ukraina',
-    '100': 'Belarus',
-
-    // --- Amerika Utara dan Tengah ---
-    '101': 'Amerika Serikat',
-    '102': 'Kanada',
-    '103': 'Meksiko',
-    '104': 'Guatemala',
-    '105': 'Honduras',
-    '106': 'El Salvador',
-    '107': 'Nikaragua',
-    '108': 'Kosta Rika',
-    '109': 'Panama',
-    '110': 'Belize',
-
-    // --- Karibia ---
-    '111': 'Kuba',
-    '112': 'Haiti',
-    '113': 'Republik Dominika',
-    '114': 'Jamaika',
-    '115': 'Trinidad dan Tobago',
-    '116': 'Bahama',
-    '117': 'Barbados',
-    '118': 'Grenada',
-    '119': 'Saint Vincent dan Grenadine',
-    '120': 'Saint Lucia',
-    '121': 'Saint Kitts dan Nevis',
-    '122': 'Antigua dan Barbuda',
-    '123': 'Dominika',
-
-    // --- Amerika Selatan ---
-    '124': 'Brasil',
-    '125': 'Argentina',
-    '126': 'Kolombia',
-    '127': 'Peru',
-    '128': 'Cile',
-    '129': 'Ekuador',
-    '130': 'Venezuela',
-    '131': 'Bolivia',
-    '132': 'Paraguay',
-    '133': 'Uruguay',
-    '134': 'Guyana',
-    '135': 'Suriname',
-
-    // --- Afrika Utara ---
-    '136': 'Mesir',
-    '137': 'Libya',
-    '138': 'Tunisia',
-    '139': 'Aljazair',
-    '140': 'Maroko',
-    '141': 'Sudan',
-    '142': 'Sudan Selatan',
-    '143': 'Mauritania',
-
-    // --- Afrika Barat ---
-    '144': 'Nigeria',
-    '145': 'Ghana',
-    '146': 'Pantai Gading',
-    '147': 'Senegal',
-    '148': 'Mali',
-    '149': 'Burkina Faso',
-    '150': 'Niger',
-    '151': 'Gambia',
-    '152': 'Guinea',
-    '153': 'Guinea-Bissau',
-    '154': 'Sierra Leone',
-    '155': 'Liberia',
-    '156': 'Togo',
-    '157': 'Benin',
-    '158': 'Tanjung Verde',
-
-    // --- Afrika Tengah ---
-    '159': 'Kamerun',
-    '160': 'Republik Demokratik Kongo',
-    '161': 'Republik Kongo',
-    '162': 'Afrika Tengah',
-    '163': 'Chad',
-    '164': 'Gabon',
-    '165': 'Guinea Khatulistiwa',
-    '166': 'Sao Tome dan Principe',
-
-    // --- Afrika Timur ---
-    '167': 'Etiopia',
-    '168': 'Kenya',
-    '169': 'Tanzania',
-    '170': 'Uganda',
-    '171': 'Rwanda',
-    '172': 'Burundi',
-    '173': 'Somalia',
-    '174': 'Jibuti',
-    '175': 'Eritrea',
-    '176': 'Komoro',
-    '177': 'Seychelles',
-    '178': 'Madagaskar',
-    '179': 'Mauritius',
-    '180': 'Mozambik',
-
-    // --- Afrika Selatan ---
-    '181': 'Afrika Selatan',
-    '182': 'Zimbabwe',
-    '183': 'Zambia',
-    '184': 'Angola',
-    '185': 'Namibia',
-    '186': 'Botswana',
-    '187': 'Lesotho',
-    '188': 'Eswatini (Swaziland)',
-    '189': 'Malawi',
-
-    // --- Oseania dan Kepulauan Pasifik ---
-    '190': "Australia", 
-    '191': 'Selandia Baru',
-    '192': 'Papua Nugini',
-    '193': 'Fiji',
-    '194': 'Samoa',
-    '195': 'Tonga',
-    '196': 'Vanuatu',
-    '197': 'Kepulauan Solomon',
-    '198': 'Kiribati',
-    '199': 'Tuvalu',
-    '200': 'Palau',
-    '201': 'Mikronesia',
-    '202': 'Kepulauan Marshall',
-    '203': 'Nauru',
-    // ... tambahkan semua mapping hingga 203 sesuai dengan data Anda
-    "301" : "Jawa", 
-  };
-
-  // Helper function untuk convert playlist number ke nama
+  // ✅ PERBAIKAN: getPlaylistName menggunakan config
   const getPlaylistName = (playlistNumber: string): string => {
-    return playlistNames[playlistNumber] || playlistNumber;
+    return PLAYLIST_NAMES[playlistNumber] || playlistNumber;
   };
 
   const togglePlaylistSelection = (groupKey: 'nada' | 'mood' | 'jenis' | 'likedBy', playlistId: string) => {
@@ -1237,8 +1226,8 @@ export default function MusicPage() {
     }
   };
 
-  // const playerRef = useRef<any>(null);
-  const songListRef = useRef<{ [key: number]: HTMLDivElement | null }>({}); // TAMBAHKAN INI
+  // ✅ BENAR - Support string & number
+  const songListRef = useRef<{ [key: string | number]: HTMLDivElement | null }>({});
 
   const addToQueue = (song: Song) => {
     setQueue(prev => {
@@ -1315,21 +1304,29 @@ export default function MusicPage() {
     likedBy: string | null;
   } | null>(null);
 
-  // Filter untuk playlist yang sedang aktif (untuk next/prev)
   const activePlaylistSongs = useMemo(() => {
-    if (!activePlaylistFilter) return filteredSongs;
+    if (!activePlaylistFilter) return filteredSongs;  // ✅ TETAP
     
     const filtered = songs.filter(song => {
-      const matchesNada = activePlaylistFilter.nada === null || song.playlist.includes(activePlaylistFilter.nada);
-      const matchesMood = activePlaylistFilter.mood === null || song.playlist.includes(activePlaylistFilter.mood);
-      const matchesJenis = activePlaylistFilter.jenis === null || song.playlist.includes(activePlaylistFilter.jenis);
-      const matchesLikedBy = activePlaylistFilter.likedBy === null || song.playlist.includes(activePlaylistFilter.likedBy);
-      
+      const matchesNada = activePlaylistFilter.nada === null || (song.playlist && song.playlist.includes(activePlaylistFilter.nada));
+      const matchesMood = activePlaylistFilter.mood === null || (song.playlist && song.playlist.includes(activePlaylistFilter.mood));
+      const matchesJenis = activePlaylistFilter.jenis === null || (song.playlist && song.playlist.includes(activePlaylistFilter.jenis));
+      const matchesLikedBy = activePlaylistFilter.likedBy === null || (song.playlist && song.playlist.includes(activePlaylistFilter.likedBy));
+
       return matchesLikedBy && matchesNada && matchesMood && matchesJenis;
     });
 
-    return sortSongs(filtered, sortCriteria);
-  }, [songs, activePlaylistFilter, sortCriteria]);
+    const sorted = sortSongs(filtered, sortCriteria);  // ✅ SAMA SEPERTI filteredSongs
+    
+    // ✅ TAMBAHKAN LOG DEBUGGING (opsional, bisa dihapus nanti)
+    console.log('Active Playlist Songs:', {
+      count: sorted.length,
+      sortCriteria,
+      firstSong: sorted[0]?.judul
+    });
+    
+    return sorted;
+  }, [songs, activePlaylistFilter, sortCriteria, filteredSongs]);  // ✅ TAMBAH filteredSongs
 
   // Tambahkan useEffect baru setelah useEffect yang ada
   useEffect(() => {
@@ -1786,9 +1783,13 @@ export default function MusicPage() {
                         <div className={`text-xs truncate transition-colors flex items-center gap-1 flex-wrap ${
                           currentSong?.id === song.id ? 'text-blue-100' : 'text-gray-400 group-hover:text-gray-300'
                         }`}>
-                          <span>{song.tahun}</span>
-                          <span>•</span>
-                          <span>Added {song.added}</span>
+                          {song.tahun && (
+                            <>
+                              <span>{song.tahun}</span>
+                              <span>•</span>
+                            </>
+                          )}
+                          {song.added && <span>Added {song.added}</span>}
                           {song.negara && (
                             <>
                               <span>•</span>
@@ -1875,7 +1876,10 @@ export default function MusicPage() {
                 </div>
                 <div className="mt-4 text-center flex-shrink-0 max-h-[20%] overflow-y-auto">
                   <h2 className="text-lg md:text-xl lg:text-2xl font-bold">{currentSong.judul}</h2>
-                  <p className="text-gray-400 text-xs md:text-sm">{currentSong.tahun} • Added {currentSong.added}</p>
+                  <p className="text-gray-400 text-xs md:text-sm">
+                    {currentSong.tahun && `${currentSong.tahun} • `}
+                    {currentSong.added && `Added ${currentSong.added}`}
+                  </p>
                   {currentSong.playlist && currentSong.playlist.length > 0 && (
                     <p className="text-gray-500 text-xs md:text-sm mt-1">
                       {currentSong.playlist.map(p => getPlaylistName(p)).join(', ')}
@@ -1890,7 +1894,10 @@ export default function MusicPage() {
                   <Music size={60} className="md:w-[120px] md:h-[120px] text-white" />
                 </div>
                 <h1 className="text-xl md:text-3xl font-bold mb-2 px-4">{currentSong.judul}</h1>
-                <p className="text-gray-400 text-sm md:text-lg mb-4">{currentSong.tahun} • Added {currentSong.added}</p>
+                <p className="text-gray-400 text-sm md:text-lg mb-4">
+                  {currentSong.tahun && `${currentSong.tahun} • `}
+                  {currentSong.added && `Added ${currentSong.added}`}
+                </p>
                 {currentSong.playlist && currentSong.playlist.length > 0 && (
                   <p className="text-gray-500 text-xs md:text-sm px-4">
                     {currentSong.playlist.map(p => getPlaylistName(p)).join(', ')}
@@ -1981,6 +1988,126 @@ export default function MusicPage() {
                         </span>
                       )}
                     </button>
+
+                    {/* MENU KUALITAS VIDEO */}
+                    <div className="relative quality-menu-container">
+                      <button 
+                        onClick={() => {
+                          if (mode === 'audio') {
+                            showNotification('⚠️ Kualitas hanya tersedia di mode video');
+                            return;
+                          }
+                          if (!isPlayerReady) {
+                            showNotification('⚠️ Player belum siap');
+                            return;
+                          }
+                          setShowQualityMenu(!showQualityMenu);
+                        }}
+                        className={`p-1 md:p-2 rounded hover:bg-gray-700 transition-colors relative ${
+                          showQualityMenu ? 'bg-gray-700' : ''
+                        } ${mode === 'audio' || !isPlayerReady ? 'opacity-50' : ''}`}
+                        title="Kualitas Video"
+                      >
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          width="16" 
+                          height="16" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          strokeWidth="2" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"
+                          className="md:w-5 md:h-5"
+                        >
+                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                          <line x1="12" y1="22.08" x2="12" y2="12"/>
+                        </svg>
+                        {currentQuality && currentQuality !== 'auto' && (
+                          <span className="absolute -top-1 -right-1 bg-green-500 w-2 h-2 rounded-full"></span>
+                        )}
+                      </button>
+                      
+                      {showQualityMenu && mode === 'video' && isPlayerReady && (
+                        <div className="absolute bottom-full mb-2 right-0 bg-gray-800 rounded-lg shadow-xl border border-gray-700 py-1 min-w-[140px] z-50 max-h-[300px] overflow-y-auto">
+                          <div className="px-3 py-1.5 text-xs text-gray-400 border-b border-gray-700 font-semibold">
+                            Kualitas Video
+                          </div>
+                          
+                          {/* Auto Quality */}
+                          <button
+                            onClick={() => changeQuality('auto')}
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-700 transition-colors flex items-center justify-between ${
+                              currentQuality === 'auto' ? 'bg-gray-700 text-blue-400 font-semibold' : 'text-white'
+                            }`}
+                          >
+                            <span>Auto</span>
+                            {currentQuality === 'auto' && <span className="text-blue-400">✓</span>}
+                          </button>
+                          
+                          {/* Available Qualities */}
+                          {availableQualities.length > 0 ? (
+                            availableQualities.map((quality) => {
+                              const qualityLabels: Record<string, string> = {
+                                'highres': '4K/8K',
+                                'hd2160': '4K (2160p)',
+                                'hd1440': '2K (1440p)',
+                                'hd1080': 'Full HD (1080p)',
+                                'hd720': 'HD (720p)',
+                                'large': 'SD (480p)',
+                                'medium': '360p',
+                                'small': '240p',
+                                'tiny': '144p'
+                              };
+                              
+                              const isCurrentQuality = currentQuality === quality;
+                              
+                              return (
+                                <button
+                                  key={quality}
+                                  onClick={() => changeQuality(quality)}
+                                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-700 transition-colors flex items-center justify-between ${
+                                    isCurrentQuality ? 'bg-gray-700 text-blue-400 font-semibold' : 'text-white'
+                                  }`}
+                                >
+                                  <span>{qualityLabels[quality] || quality}</span>
+                                  {isCurrentQuality && <span className="text-blue-400">✓</span>}
+                                </button>
+                              );
+                            })
+                          ) : (
+                            <div className="px-3 py-2 text-xs text-gray-500 italic">
+                              Loading qualities...
+                            </div>
+                          )}
+                          
+                          {/* Info Footer */}
+                          <div className="px-3 py-1.5 text-[10px] text-gray-500 border-t border-gray-700 mt-1">
+                            <div>Current: {(() => {
+                              const labels: Record<string, string> = {
+                                'highres': '4K/8K', 'hd2160': '4K', 'hd1440': '2K',
+                                'hd1080': '1080p', 'hd720': '720p', 'large': '480p',
+                                'medium': '360p', 'small': '240p', 'tiny': '144p', 'auto': 'Auto'
+                              };
+                              return labels[currentQuality] || currentQuality;
+                            })()}</div>
+                            {preferredQuality !== 'auto' && (
+                              <div className="text-green-400 mt-0.5">
+                                Saved: {(() => {
+                                  const labels: Record<string, string> = {
+                                    'highres': '4K/8K', 'hd2160': '4K', 'hd1440': '2K',
+                                    'hd1080': '1080p', 'hd720': '720p', 'large': '480p',
+                                    'medium': '360p', 'small': '240p', 'tiny': '144p'
+                                  };
+                                  return labels[preferredQuality] || preferredQuality;
+                                })()}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
                     <button 
                       onClick={toggleFullscreen}
@@ -2085,7 +2212,9 @@ export default function MusicPage() {
                   >
                     <div className="font-semibold text-sm truncate">{song.judul}</div>
                     <div className="text-xs text-gray-400 truncate">
-                      {song.tahun} • Added {song.added}{song.negara && ` • ${song.negara}`}
+                      {song.tahun && `${song.tahun} • `}
+                      {song.added && `Added ${song.added}`}
+                      {song.negara && ` • ${song.negara}`}
                     </div>
                   </div>
                   
@@ -2182,14 +2311,13 @@ export default function MusicPage() {
           background-color: #2d3748;
         }
 
-        /* Disable interaksi pada YouTube player */
+        /* Aktifkan interaksi pada YouTube player */
         #youtube-player {
-          pointer-events: none;
+          pointer-events: auto;  /* ✅ User bisa klik kontrol YouTube */
         }
 
-        /* Jika ada iframe di dalam youtube-player */
         #youtube-player iframe {
-          pointer-events: none;
+          pointer-events: auto;  /* ✅ Iframe bisa diinteraksi */
         }
 
         /* ===== CUSTOM SCROLLBAR STYLES ===== */
