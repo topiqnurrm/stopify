@@ -1,13 +1,18 @@
-// lib/musicConfig.js
+// lib/musicConfig.ts
 
-export const MUSIC_SOURCES = {
+interface MusicSource {
+  folder: string;
+  files: number[];
+}
+
+export const MUSIC_SOURCES: Record<string, MusicSource> = {
   taufiq: { folder: 'taufiq', files: [1, 4] },
-  nadya: { folder: 'nadya', files: [1] },
+  // nadya: { folder: 'nadya', files: [1] },
   nadzar: { folder: 'nadzar', files: [1] },
 };
 
-export const getAllMusicEndpoints = () => {
-  const endpoints = [];
+export const getAllMusicEndpoints = (): string[] => {
+  const endpoints: string[] = [];
   
   Object.values(MUSIC_SOURCES).forEach(source => {
     source.files.forEach(fileNum => {
@@ -18,9 +23,7 @@ export const getAllMusicEndpoints = () => {
   return endpoints;
 };
 
-// ✅ PERBAIKAN: Tambahkan type annotation
-/** @type {Record<string, string>} */
-export const PLAYLIST_NAMES = {
+export const PLAYLIST_NAMES: Record<string, string> = {
   // String keys
   'a': "Normal",
   'b': "Taufiq",

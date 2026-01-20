@@ -7,10 +7,10 @@ import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, List, ChevronLeft,
 import { getAllMusicEndpoints, PLAYLIST_NAMES } from '@/lib/musicConfig';
 
 // ===== GOOGLE ANALYTICS 4 CONFIGURATION =====
-const GA_MEASUREMENT_ID = 'G-PZ1HRPEQYF';
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID || '';
 
 // ===== UMAMI ANALYTICS CONFIGURATION =====
-const UMAMI_WEBSITE_ID = '7eae54fd-2694-45fc-9f8a-d126a0c936f5';
+const UMAMI_WEBSITE_ID = process.env.NEXT_PUBLIC_UMAMI_ID || '';
 const UMAMI_SRC = 'https://cloud.umami.is/script.js';
 
 // Load Google Analytics Script
