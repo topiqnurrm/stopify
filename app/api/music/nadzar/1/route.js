@@ -3,6 +3,51 @@ import { NextResponse } from 'next/server';
 export async function GET() {
     const data = [
         {
+            id: "l25",
+            judul: "Eminem - Mockingbird", 
+            link: "https://www.youtube.com/watch?v=mkE8WSS51mA", 
+            tahun: "2009 December 25",
+            playlist : [
+                "l",
+            ],
+        },
+        {
+            id: "l24",
+            judul: "Taylor Swift - The fate of Ophelia", 
+            link: "https://www.youtube.com/watch?v=rbmdfEQODOw", 
+            tahun: "2025 October 06",
+            playlist : [
+                "l",
+            ],
+        },
+        {
+            id: "l23",
+            judul: "5 Second of Summer - Teeth", 
+            link: "https://www.youtube.com/watch?v=TrUG_5s8-zY", 
+            tahun: "2019 August 21",
+            playlist : [
+                "l",
+            ],
+        },
+        {
+            id: "l22",
+            judul: "New Hope Club ft Danna Paola - Know Me Too Well", 
+            link: "https://www.youtube.com/watch?v=i3h9NEGdIWc", 
+            tahun: "2019 October 10",
+            playlist : [
+                "l",
+            ],
+        },
+        {
+            id: "l21",
+            judul: "NCT 127 - Favorite (Vampire)", 
+            link: "https://www.youtube.com/watch?v=USyL4tNFNhY", 
+            tahun: "2021 September 17",
+            playlist : [
+                "l",
+            ],
+        },
+        {
             id: "l20",
             judul: "Ricky Montgomery - Line Without a Hook", 
             link: "https://www.youtube.com/watch?v=8JW6qzPCkE8", 

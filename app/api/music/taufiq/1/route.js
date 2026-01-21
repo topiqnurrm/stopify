@@ -3,6 +3,116 @@ import { NextResponse } from 'next/server';
 export async function GET() {
     const data = [
         {
+            id: 90,
+            judul: "C.H.R.I.S.Y.E., Diskoria, Laleilmanino, Eva Celia",
+            link: "https://www.youtube.com/watch?v=p4REDEl_WPc",
+            tahun: "2021 Januari 15",
+            playlist : [
+                "b",
+                "2", "h", "5", "8", "9",
+            ],
+            added: "7 April 2021",
+        },
+        {
+            id: 89,
+            judul: "Stuck With U (with Justin Bieber), Ariana Grande, Justin Bieber",
+            link: "https://www.youtube.com/watch?v=Sczslr6tGhM",
+            tahun: "2020 Mei 8",
+            playlist : [
+                "b",
+                "3", "h", "8", "60",
+            ],
+            added: "7 April 2021",
+        },
+        {
+            id: 88,
+            judul: "MANTE MÁ, Nakama, Mc Staff",
+            link: "https://www.youtube.com/watch?v=nlXeBShsF9c",
+            tahun: "2025 Mei 16",
+            playlist : [
+                "b",
+                "2", "6", "e", "8", "124",
+            ],
+            added: "21 Januari 2026",
+        },
+        {
+            id: 87,
+            judul: "Somebody That I Used To Know, Gotye, Kimbra",
+            link: "https://www.youtube.com/watch?v=RvUBdFX3g1Y",
+            tahun: "2011 Juli 6",
+            playlist : [
+                "b",
+                "2", "4", "k", "60",
+            ],
+            added: "4 April 2021",
+        },
+        {
+            id: 86,
+            judul: "Weak, Larissa Lambert",
+            link: "https://www.youtube.com/watch?v=pTONN4QuhQQ",
+            tahun: "2020 Desember 24",
+            playlist : [
+                "b",
+                "1", "h", "5", "7", "60",
+            ],
+            added: "4 April 2021",
+        },
+        {
+            id: 85,
+            judul: "MONTAGEM COMA, ANDROMEDA, elysian.",
+            link: "https://www.youtube.com/watch?v=oraz194mpA8",
+            tahun: "2025 Juni 6",
+            playlist : [
+                "b",
+                "2", "6", "e", "8", "124",
+            ],
+            added: "21 Januari 2026",
+        },
+        {
+            id: 84,
+            judul: "MONTAGEM XONADA, MXZI, Dj Samir, DJ Javi26",
+            link: "https://www.youtube.com/watch?v=8Lnoehipr3M",
+            tahun: "2025 Juli 2",
+            playlist : [
+                "b",
+                "2", "6", "e", "8", "124",
+            ],
+            added: "21 Januari 2026",
+        },
+        {
+            id: 83,
+            judul: "Rollin’, Brave Girls",
+            link: "https://www.youtube.com/watch?v=33ykdm7_AlA",
+            tahun: "2017 Maret 7",
+            playlist : [
+                "b",
+                "2", "5", "8", "10",
+            ],
+            added: "4 April 2021",
+        },
+        {
+            id: 82,
+            judul: "Rain On Me (with Ariana Grande), Lady Gaga, Ariana Grande",
+            link: "https://www.youtube.com/watch?v=-AHrX9FI_fg",
+            tahun: "2020 Mei 22",
+            playlist : [
+                "b",
+                "1", "5", "8", "60",
+            ],
+            added: "4 April 2021",
+        },
+        {
+            id: 81,
+            judul: "Pease Don’t Go, Mike Posner",
+            link: "https://www.youtube.com/watch?v=pOHUOuCLgKY",
+            tahun: "2010 Oktober 16",
+            playlist : [
+                "b",
+                "3", "h", "a", "k", "60",
+            ],
+            added: "4 April 2021",
+        },
+        {
             id: 80,
             judul: "Makna Cinta, Rizky Febrian",
             link: "https://www.youtube.com/watch?v=rois6RucjF0",

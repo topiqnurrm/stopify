@@ -222,6 +222,10 @@ export default function MusicPage() {
   const [preferredQuality, setPreferredQuality] = useState<string>('auto');
   const qualityRetryCountRef = useRef<number>(0);
 
+  // STATE UNTUK AUTO-HIDE CONTROLS
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimeoutRef = useRef<number | null>(null);
+
   // --- WAKE LOCK LOGIC ---
   const requestWakeLock = async () => {
       if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && !wakeLock) {
@@ -1470,6 +1474,59 @@ export default function MusicPage() {
     }
   }, [activePlaylistFilter]);
 
+  // AUTO-HIDE CONTROLS - Tampilkan saat mouse di 1/3 bawah layar (DESKTOP ONLY)
+  useEffect(() => {
+    if (!mounted || typeof window === 'undefined') return;
+    
+    const checkDesktop = () => window.innerWidth >= 768;
+    
+    // Set initial state
+    if (!checkDesktop()) {
+      setShowControls(true); // Mobile: selalu tampilkan
+      return;
+    }
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      // Double check desktop saat event
+      if (!checkDesktop()) return;
+      
+      const windowHeight = window.innerHeight;
+      const mouseY = e.clientY;
+      const lowerThreshold = windowHeight * (2/3);
+      
+      if (mouseY >= lowerThreshold) {
+        setShowControls(true);
+        
+        if (controlsTimeoutRef.current) {
+          window.clearTimeout(controlsTimeoutRef.current);
+        }
+        
+        controlsTimeoutRef.current = window.setTimeout(() => {
+          setShowControls(false);
+        }, 3000) as number;
+      } else {
+        setShowControls(false);
+      }
+    };
+    
+    const handleResize = () => {
+      if (!checkDesktop()) {
+        setShowControls(true); // Paksa tampil jika resize ke mobile
+      }
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', handleResize);
+      if (controlsTimeoutRef.current) {
+        window.clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, [mounted]);
+
   if (!mounted) return <div className="h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>;
 
   return (
@@ -1965,58 +2022,62 @@ export default function MusicPage() {
           </button>
         </div>
 
-        {/* Player Area: overflow-y-auto untuk mengatasi layar kecil vertical space */}
-        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 overflow-hidden relative">
-          {currentSong ? (
-            <>
-              {/* --- CONTAINER 1: VIDEO PLAYER (Visibility Diubah) --- */}
-              {/* Menggunakan kelas kustom untuk menyembunyikan tanpa display: none */}
-              <div 
-                className={`w-full h-full flex flex-col items-center justify-center p-4 md:p-8 transition-all duration-300 ${mode === 'audio' ? 'player-invisible' : 'block'}`}
-              >
-                <div className="w-full flex-1 flex items-center justify-center min-h-0">
-                  <div className="w-full h-full bg-black rounded-lg overflow-hidden relative" style={{ maxHeight: '100%', aspectRatio: '16/9', maxWidth: 'min(100%, calc(100vh * 16/9))' }}>
-                    <div id="youtube-player" className="absolute top-0 left-0 w-full h-full"></div>
+        {/* Player Area: bisa scroll untuk sembunyikan controls */}
+        <div className="flex-1 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 overflow-y-auto relative">
+          <div className="min-h-full flex items-center justify-center py-4">
+            {currentSong ? (
+              <>
+                {/* --- CONTAINER 1: VIDEO PLAYER (Visibility Diubah) --- */}
+                {/* Menggunakan kelas kustom untuk menyembunyikan tanpa display: none */}
+                <div 
+                  className={`w-full h-full flex flex-col items-center justify-center p-4 md:p-8 transition-all duration-300 ${mode === 'audio' ? 'player-invisible' : 'block'}`}
+                >
+                  <div className="w-full flex-1 flex items-center justify-center min-h-0">
+                    <div className="w-full h-full bg-black rounded-lg overflow-hidden relative" style={{ maxHeight: '100%', aspectRatio: '16/9', maxWidth: 'min(100%, calc(100vh * 16/9))' }}>
+                      <div id="youtube-player" className="absolute top-0 left-0 w-full h-full"></div>
+                    </div>
+                  </div>
+                  <div className="mt-4 text-center flex-shrink-0 max-h-[20%] overflow-y-auto">
+                    <h2 className="text-lg md:text-xl lg:text-2xl font-bold">{currentSong.judul}</h2>
+                    <p className="text-gray-400 text-xs md:text-sm">
+                      {currentSong.tahun && `${currentSong.tahun} • `}
+                      {currentSong.added && `Added ${currentSong.added}`}
+                    </p>
+                    {currentSong.playlist && currentSong.playlist.length > 0 && (
+                      <p className="text-gray-500 text-xs md:text-sm mt-1">
+                        {currentSong.playlist.map(p => getPlaylistName(p)).join(', ')}
+                      </p>
+                    )}
                   </div>
                 </div>
-                <div className="mt-4 text-center flex-shrink-0 max-h-[20%] overflow-y-auto">
-                  <h2 className="text-lg md:text-xl lg:text-2xl font-bold">{currentSong.judul}</h2>
-                  <p className="text-gray-400 text-xs md:text-sm">
+
+                {/* --- CONTAINER 2: AUDIO UI (COVER ART) --- */}
+                <div className={`text-center max-w-md w-full transition-all duration-300 ${mode === 'video' ? 'hidden' : 'block'}`}>
+                  <div className="w-40 h-40 md:w-64 md:h-64 mx-auto bg-gradient-to-br from-purple-600 via-pink-500 to-blue-600 rounded-full flex items-center justify-center mb-6 md:mb-8 shadow-2xl animate-pulse-slow">
+                    <Music size={60} className="md:w-[120px] md:h-[120px] text-white" />
+                  </div>
+                  <h1 className="text-xl md:text-3xl font-bold mb-2 px-4">{currentSong.judul}</h1>
+                  <p className="text-gray-400 text-sm md:text-lg mb-4">
                     {currentSong.tahun && `${currentSong.tahun} • `}
                     {currentSong.added && `Added ${currentSong.added}`}
                   </p>
                   {currentSong.playlist && currentSong.playlist.length > 0 && (
-                    <p className="text-gray-500 text-xs md:text-sm mt-1">
+                    <p className="text-gray-500 text-xs md:text-sm px-4">
                       {currentSong.playlist.map(p => getPlaylistName(p)).join(', ')}
                     </p>
                   )}
                 </div>
-              </div>
-
-              {/* --- CONTAINER 2: AUDIO UI (COVER ART) --- */}
-              <div className={`text-center max-w-md w-full transition-all duration-300 ${mode === 'video' ? 'hidden' : 'block'}`}>
-                <div className="w-40 h-40 md:w-64 md:h-64 mx-auto bg-gradient-to-br from-purple-600 via-pink-500 to-blue-600 rounded-full flex items-center justify-center mb-6 md:mb-8 shadow-2xl animate-pulse-slow">
-                  <Music size={60} className="md:w-[120px] md:h-[120px] text-white" />
-                </div>
-                <h1 className="text-xl md:text-3xl font-bold mb-2 px-4">{currentSong.judul}</h1>
-                <p className="text-gray-400 text-sm md:text-lg mb-4">
-                  {currentSong.tahun && `${currentSong.tahun} • `}
-                  {currentSong.added && `Added ${currentSong.added}`}
-                </p>
-                {currentSong.playlist && currentSong.playlist.length > 0 && (
-                  <p className="text-gray-500 text-xs md:text-sm px-4">
-                    {currentSong.playlist.map(p => getPlaylistName(p)).join(', ')}
-                  </p>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="text-center text-gray-400"><Music size={80} className="mx-auto mb-4 opacity-50" /><p>Pilih lagu dari playlist</p></div>
-          )}
+              </>
+            ) : (
+              <div className="text-center text-gray-400"><Music size={80} className="mx-auto mb-4 opacity-50" /><p>Pilih lagu dari playlist</p></div>
+            )}
+          </div>
         </div>
 
-        {/* Controls */}
-        <div className="bg-gray-800 p-3 md:p-6 flex-shrink-0">
+        {/* Controls - sticky di bawah dengan auto-hide (desktop only) */}
+        <div className={`bg-gray-800 p-3 md:p-6 fixed md:relative bottom-0 left-0 right-0 z-30 ${
+          showControls ? 'block' : 'md:hidden'
+        }`}>
           <div className="max-w-4xl mx-auto">
             
             {/* Timeline */}
@@ -2048,12 +2109,13 @@ export default function MusicPage() {
                     <span className="text-xs text-gray-400 w-6 md:w-8">{volume}%</span>
                 </div>
                 
-                {/* KONTROL UTAMA PLAYBACK */}
-                <div className="flex items-center justify-center gap-3 md:gap-6 order-1 md:order-2">
+                {/* KONTROL UTAMA PLAYBACK - dengan scroll horizontal */}
+                <div className="overflow-x-auto scrollbar-hide order-1 md:order-2 w-full md:w-auto">
+                  <div className="flex items-center justify-center gap-3 md:gap-6 min-w-max px-2">
                     <button 
                       onClick={toggleShuffle} 
                       disabled={isCurrentlyPlayingFromQueue}
-                      className={`p-1 md:p-2 rounded hover:bg-gray-700 transition-opacity ${
+                      className={`p-1 md:p-2 rounded hover:bg-gray-700 transition-opacity flex-shrink-0 ${
                         isCurrentlyPlayingFromQueue 
                           ? 'opacity-30 cursor-not-allowed' 
                           : isShuffled 
@@ -2064,21 +2126,21 @@ export default function MusicPage() {
                       <Shuffle size={16} className="md:w-5 md:h-5" />
                     </button>
                     
-                    <button onClick={playPrevious} className="p-1 md:p-2 rounded hover:bg-gray-700">
+                    <button onClick={playPrevious} className="p-1 md:p-2 rounded hover:bg-gray-700 flex-shrink-0">
                       <SkipBack size={20} className="md:w-7 md:h-7" />
                     </button>
                     
-                    <button onClick={togglePlay} className="p-3 md:p-4 bg-blue-600 rounded-full hover:bg-blue-700 hover:scale-105 transition-transform">
+                    <button onClick={togglePlay} className="p-3 md:p-4 bg-blue-600 rounded-full hover:bg-blue-700 hover:scale-105 transition-transform flex-shrink-0">
                       {isPlaying ? <Pause size={20} className="md:w-8 md:h-8" /> : <Play size={20} className="md:w-8 md:h-8" />}
                     </button>
                     
-                    <button onClick={playNext} className="p-1 md:p-2 rounded hover:bg-gray-700">
+                    <button onClick={playNext} className="p-1 md:p-2 rounded hover:bg-gray-700 flex-shrink-0">
                       <SkipForward size={20} className="md:w-7 md:h-7" />
                     </button>
                     
                     <button 
                       onClick={toggleRepeat} 
-                      className={`p-1 md:p-2 rounded hover:bg-gray-700 relative transition-opacity ${
+                      className={`p-1 md:p-2 rounded hover:bg-gray-700 relative transition-opacity flex-shrink-0 ${
                         repeatMode !== 'off' ? 'text-blue-500' : ''
                       } ${
                         isCurrentlyPlayingFromQueue && repeatMode === 'off' 
@@ -2095,7 +2157,7 @@ export default function MusicPage() {
                     </button>
 
                     {/* MENU KUALITAS VIDEO */}
-                    <div className="relative quality-menu-container">
+                    <div className="relative quality-menu-container flex-shrink-0">
                       <button 
                         onClick={() => {
                           if (mode === 'audio') {
@@ -2216,13 +2278,14 @@ export default function MusicPage() {
 
                     <button 
                       onClick={toggleFullscreen}
-                      className={`p-1 md:p-2 rounded hover:bg-gray-700 transition-colors ${
+                      className={`p-1 md:p-2 rounded hover:bg-gray-700 transition-colors flex-shrink-0 ${
                         isFullscreen ? 'text-blue-500' : ''
                       }`}
                       title={isFullscreen ? 'Keluar dari Fullscreen' : 'Fullscreen'}
                     >
                       {isFullscreen ? <Minimize size={16} className="md:w-5 md:h-5" /> : <Maximize size={16} className="md:w-5 md:h-5" />}
                     </button>
+                  </div>
                 </div>
                 
                 <div className="hidden md:block w-40 order-3"> {/* Spacer agar kontrol di tengah */}</div>
@@ -2477,6 +2540,16 @@ export default function MusicPage() {
 
         .queue-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(59, 130, 246, 0.8);
+        }
+
+        /* Scrollbar untuk nav controls (hidden) */
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
     </div>
