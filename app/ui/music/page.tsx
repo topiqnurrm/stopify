@@ -536,47 +536,35 @@ export default function MusicPage() {
   // ✅ PERBAIKAN: fetchSongs
   const fetchSongs = async (initialQueue: Song[]) => {
     try {
-      const endpoints = getAllMusicEndpoints();
+      const response = await fetch('/api/music');
       
-      console.log('Fetching from endpoints:', endpoints); // Debug
+      if (!response.ok) {
+        console.error('Failed to fetch music:', response.status);
+        return;
+      }
       
-      const responses = await Promise.all(
-        endpoints.map(endpoint => 
-          fetch(endpoint)
-            .then(res => {
-              console.log(`Response from ${endpoint}:`, res.ok); // Debug
-              return res.ok ? res.json() : [];
-            })
-            .catch(err => {
-              console.error(`Failed to fetch ${endpoint}:`, err);
-              return [];
-            })
-        )
-      );
-
-      console.log('All responses:', responses); // Debug
-
-      // Gabungkan semua data
-      const allSongs = responses.flat();
-      console.log('Total songs before dedup:', allSongs.length); // Debug
+      // ✅ PERBAIKAN: Cast hasil JSON ke Song[]
+      const allSongs = await response.json() as Song[];
+      console.log('Total songs fetched:', allSongs.length);
       
       // Hapus duplikat berdasarkan ID (support string & number)
       const uniqueSongs = Array.from(
-        new Map(allSongs.map(song => [String(song.id), song])).values()
+        new Map(allSongs.map((song) => [String(song.id), song])).values()
       );
       
-      console.log('Unique songs:', uniqueSongs.length); // Debug
+      console.log('Unique songs:', uniqueSongs.length);
       
-      const songsWithCountry = uniqueSongs.map(song => {
+      // ✅ PERBAIKAN: Tidak perlu type annotation lagi karena sudah di-cast di atas
+      const songsWithCountry = uniqueSongs.map((song) => {
         const countryPlaylists = song.playlist 
-          ? song.playlist.filter((p: string) => {
+          ? song.playlist.filter((p) => {
               const num = parseInt(p);
               return num >= 9 && num <= 999;
             })
           : [];
         
         const negaraString = countryPlaylists.length > 0 
-          ? countryPlaylists.map((p: string) => getPlaylistName(p)).join(', ')
+          ? countryPlaylists.map((p) => getPlaylistName(p)).join(', ')
           : undefined;
         
         return {
@@ -586,7 +574,7 @@ export default function MusicPage() {
       });
         
       setSongs(songsWithCountry);
-      console.log('Songs set:', songsWithCountry.length); // Debug
+      console.log('Songs set:', songsWithCountry.length);
     } catch (error) {
       console.error('Error fetching songs:', error);
     }
@@ -2110,7 +2098,8 @@ export default function MusicPage() {
                 </div>
                 
                 {/* KONTROL UTAMA PLAYBACK - dengan scroll horizontal */}
-                <div className="overflow-x-auto scrollbar-hide order-1 md:order-2 w-full md:w-auto">
+                <div className="overflow-visible order-1 md:order-2 w-full md:w-auto">
+                {/* ✅ UBAH overflow-x-auto menjadi overflow-visible */}
                   <div className="flex items-center justify-center gap-3 md:gap-6 min-w-max px-2">
                     <button 
                       onClick={toggleShuffle} 
@@ -2196,8 +2185,10 @@ export default function MusicPage() {
                         )}
                       </button>
                       
-                      {showQualityMenu && mode === 'video' && isPlayerReady && (
-                        <div className="absolute bottom-full mb-2 right-0 bg-gray-800 rounded-lg shadow-xl border border-gray-700 py-1 min-w-[140px] z-50 max-h-[300px] overflow-y-auto">
+                      {/* ✅ PERBAIKAN: Hapus pengecekan mode dan isPlayerReady di sini */}
+                      {showQualityMenu && (
+                        <div className="absolute bottom-full mb-2 right-0 bg-gray-800 rounded-lg shadow-xl border border-gray-700 py-1 min-w-[140px] z-[9999] max-h-[300px] overflow-y-auto">
+                          {/* ✅ UBAH z-50 menjadi z-[9999] */}
                           <div className="px-3 py-1.5 text-xs text-gray-400 border-b border-gray-700 font-semibold">
                             Kualitas Video
                           </div>
