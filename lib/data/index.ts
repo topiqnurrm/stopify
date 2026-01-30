@@ -11,6 +11,9 @@ export interface MusicDatabase {
   };
 }
 
+// Use the imported MusicItem type for consistency
+// (Remove the local MusicItem interface)
+
 export const allMusicData: MusicDatabase = {
   taufiq: {
     '1': taufiq1,
@@ -24,7 +27,7 @@ export const allMusicData: MusicDatabase = {
   // },
 };
 
-// Helper function untuk get semua musik
+// Helper function untuk get semua musik (sorted by ID descending)
 export function getAllMusic(): MusicItem[] {
   const allMusic: MusicItem[] = [];
   
@@ -34,10 +37,17 @@ export function getAllMusic(): MusicItem[] {
     });
   });
   
-  return allMusic;
+  // Sort by ID descending (ID besar di atas)
+  return allMusic.sort((a, b) => Number(b.id) - Number(a.id));
 }
 
 // Helper function untuk get musik berdasarkan folder dan file
 export function getMusicByPath(folder: string, fileNum: string): MusicItem[] {
   return allMusicData[folder]?.[fileNum] || [];
+}
+
+// Helper function untuk get musik by path dengan sorting
+export function getMusicByPathSorted(folder: string, fileNum: string): MusicItem[] {
+  const music = allMusicData[folder]?.[fileNum] || [];
+  return [...music].sort((a, b) => Number(b.id) - Number(a.id));
 }

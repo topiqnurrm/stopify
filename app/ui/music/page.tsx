@@ -86,6 +86,27 @@ const trackUmamiEvent = (eventName: string, eventData?: Record<string, any>) => 
 };
 // ===== END UMAMI ANALYTICS =====
 
+const isYouTubeLink = (url: string): boolean => {
+  return url.includes('youtube.com') || url.includes('youtu.be');
+};
+
+const isMp3File = (url: string): boolean => {
+  return url.endsWith('.mp3') || url.startsWith('/music/');
+};
+
+const getYoutubeVideoId = (url: string) => {
+  if (!isYouTubeLink(url)) return null;
+  const match = url.match(/[?&]v=([^&]+)/);
+  return match ? match[1] : null;
+};
+
+const formatTime = (time: number): string => {
+  if (isNaN(time) || time < 0) return '00:00';
+  const minutes = Math.floor(time / 60);
+  const seconds = Math.floor(time % 60);
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
 // =========================================================
 // KOREKSI TYPEDEFS DENGAN DECLARATION MERGING
 // =========================================================
@@ -121,13 +142,6 @@ const getOriginUrl = (): string | undefined => {
     return window.location.origin;
   }
   return undefined;
-};
-
-const formatTime = (time: number): string => {
-  if (isNaN(time) || time < 0) return '00:00';
-  const minutes = Math.floor(time / 60);
-  const seconds = Math.floor(time % 60);
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
 
 // Helper function untuk parse tanggal Indonesia (DD Bulan YYYY)
@@ -170,10 +184,14 @@ export default function MusicPage() {
   const [queue, setQueue] = useState<Song[]>([]); 
   const [isShuffled, setIsShuffled] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off');
-  const repeatModeRef = useRef<'off' | 'all' | 'one'>('off'); // Tambah ini
-  const isShuffledRef = useRef<boolean>(false); // TAMBAHAN BARU
-  const shuffledOrderRef = useRef<Song[]>([]); // TAMBAHAN BARU
+  const repeatModeRef = useRef<'off' | 'all' | 'one'>('off');
+  const isShuffledRef = useRef<boolean>(false);
+  const shuffledOrderRef = useRef<Song[]>([]);
   const [shuffledOrder, setShuffledOrder] = useState<Song[]>([]);
+  
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  
   const [selectedPlaylists, setSelectedPlaylists] = useState<{
     nada: string | null;
     mood: string | null;
@@ -254,20 +272,22 @@ export default function MusicPage() {
 
   // --- FULLSCREEN LOGIC (YouTube Player) ---
   const toggleFullscreen = () => {
-    // Cek mode terlebih dahulu
     if (mode === 'audio') {
       showNotification('⚠️ Fullscreen hanya tersedia di mode video');
       return;
     }
 
-    // Cek player ready
+    if (isMp3File(currentSong?.link || '')) {
+      showNotification('⚠️ Fullscreen tidak tersedia untuk file MP3');
+      return;
+    }
+
     if (!playerRef.current || !isPlayerReady) {
       showNotification('⚠️ Player belum siap');
       return;
     }
 
     try {
-      // Cari container video player (bukan iframe langsung)
       const playerContainer = document.querySelector('#youtube-player');
       
       if (!playerContainer) {
@@ -277,7 +297,6 @@ export default function MusicPage() {
       }
 
       if (!document.fullscreenElement) {
-        // Masuk fullscreen
         playerContainer.requestFullscreen().then(() => {
           setIsFullscreen(true);
           showNotification('🖥️ Video Fullscreen');
@@ -286,7 +305,6 @@ export default function MusicPage() {
           showNotification('❌ Fullscreen gagal: ' + err.message);
         });
       } else {
-        // Keluar fullscreen
         document.exitFullscreen().then(() => {
           setIsFullscreen(false);
           showNotification('🪟 Keluar dari Fullscreen');
@@ -301,6 +319,11 @@ export default function MusicPage() {
   };
 
   const changeQuality = (quality: string) => {
+    if (isMp3File(currentSong?.link || '')) {
+      showNotification('⚠️ Kualitas tidak tersedia untuk file MP3');
+      return;
+    }
+
     if (!playerRef.current || !isPlayerReady) {
       showNotification('⚠️ Player belum siap');
       return;
@@ -325,16 +348,15 @@ export default function MusicPage() {
         'auto': 'Auto'
       };
 
-      // PERBAIKAN KRUSIAL: Gunakan loadVideoById untuk memaksa kualitas
       const videoId = getYoutubeVideoId(currentSong!.link);
+      if (!videoId) return;
+      
       const currentTime = playerRef.current.getCurrentTime();
       const wasPlaying = isPlaying;
       
-      // Simpan preferensi kualitas
       setPreferredQuality(quality);
       localStorage.setItem('preferredQuality', quality);
       
-      // METODE 1: Reload video dengan kualitas yang dipilih
       if (quality !== 'auto') {
         playerRef.current.loadVideoById({
           videoId: videoId,
@@ -342,11 +364,9 @@ export default function MusicPage() {
           suggestedQuality: quality
         });
       } else {
-        // Untuk auto, cukup set playback quality
         playerRef.current.setPlaybackQuality('default');
       }
       
-      // Tunggu video dimuat dan restore state
       setTimeout(() => {
         if (playerRef.current) {
           const actualQuality = playerRef.current.getPlaybackQuality();
@@ -588,16 +608,83 @@ export default function MusicPage() {
     setCurrentTime(0); 
     setDuration(0);
 
+    if (isMp3File(currentSong.link)) {
+      if (playerRef.current) {
+        try {
+          if (typeof playerRef.current.destroy === 'function') {
+            playerRef.current.destroy();
+          }
+          playerRef.current = null;
+        } catch (e) {
+          console.error('Error destroying YouTube player:', e);
+        }
+      }
+
+      if (qualityCheckIntervalRef.current) {
+        window.clearInterval(qualityCheckIntervalRef.current);
+        qualityCheckIntervalRef.current = null;
+      }
+
+      const audio = new Audio(currentSong.link);
+      audioRef.current = audio;
+      setAudioElement(audio);
+
+      audio.volume = volume / 100;
+
+      audio.addEventListener('loadedmetadata', () => {
+        setDuration(audio.duration);
+        setIsPlayerReady(true);
+        console.log('MP3 loaded, duration:', audio.duration);
+      });
+
+      audio.addEventListener('timeupdate', () => {
+        setCurrentTime(audio.currentTime);
+      });
+
+      audio.addEventListener('ended', () => {
+        handleVideoEnded();
+      });
+
+      audio.addEventListener('error', (e) => {
+        console.error('Audio error:', e);
+        showNotification('❌ Gagal memutar audio');
+        setIsPlaying(false);
+      });
+
+      if (isPlaying) {
+        audio.play().catch(e => {
+          console.error('Audio play error:', e);
+        });
+      }
+
+      return () => {
+        audio.pause();
+        audio.src = '';
+        audio.remove();
+        audioRef.current = null;
+        setAudioElement(null);
+      };
+    }
+
     const videoId = getYoutubeVideoId(currentSong.link);
     if (!videoId) return;
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+      audioRef.current = null;
+      setAudioElement(null);
+    }
 
     if (playerRef.current) {
       try {
         if (typeof playerRef.current.destroy === 'function') {
-           playerRef.current.destroy();
+          playerRef.current.destroy();
         }
         playerRef.current = null;
-      } catch (e) { /* ignore */ }
+      } catch (e) {
+        console.error('Error destroying player:', e);
+      }
     }
 
     if (window.YT && window.YT.Player) {
@@ -610,9 +697,9 @@ export default function MusicPage() {
         videoId: videoId,
         playerVars: {
           autoplay: 0, 
-          controls: 1,  // ✅ Aktifkan kontrol YouTube
-          disablekb: 0,  // ✅ Aktifkan keyboard shortcuts
-          fs: 1,  // ✅ Aktifkan tombol fullscreen YouTube
+          controls: 1,
+          disablekb: 0,
+          fs: 1,
           modestbranding: 1,
           playsinline: 1,
           rel: 0,
@@ -626,25 +713,17 @@ export default function MusicPage() {
             
             setDuration(event.target.getDuration());
             
-            // Setup kualitas video
             const qualities = event.target.getAvailableQualityLevels();
             console.log('Available qualities:', qualities);
             setAvailableQualities(qualities);
             
-            // Load preferensi kualitas
             const savedQuality = localStorage.getItem('preferredQuality') || preferredQuality;
             setPreferredQuality(savedQuality);
             
-            // Get initial quality
             const initialQuality = event.target.getPlaybackQuality();
             console.log('Initial quality:', initialQuality, 'Preferred:', savedQuality);
             setCurrentQuality(initialQuality || 'auto');
             
-            // PERBAIKAN: JANGAN apply quality di onReady secara paksa
-            // Quality akan di-apply saat user memilih dari menu
-            // Atau saat loadVideoById dipanggil dengan suggestedQuality
-            
-            // Start quality monitoring (TETAP DIPERLUKAN untuk update UI)
             if (qualityCheckIntervalRef.current) {
               window.clearInterval(qualityCheckIntervalRef.current);
             }
@@ -659,7 +738,6 @@ export default function MusicPage() {
               }
             }, 2000) as number;
             
-            // Auto-play jika isPlaying true
             if (isPlaying) {
               setTimeout(() => {
                 try {
@@ -670,7 +748,6 @@ export default function MusicPage() {
               }, 200);
             }
             
-            // Start time tracking
             if (timeUpdateIntervalRef.current) {
               window.clearInterval(timeUpdateIntervalRef.current);
             }
@@ -687,27 +764,24 @@ export default function MusicPage() {
             }, 1000) as number;
           },
           onError: (event: any) => {
-             console.error('Player Error', event.data);
-             setIsPlaying(false);
+            console.error('Player Error', event.data);
+            setIsPlaying(false);
           },
           onStateChange: (event: any) => {
             if (event.data === 0) {
               handleVideoEnded();
-            } else if (event.data === 1) { // PLAYING
+            } else if (event.data === 1) {
               setIsPlaying(true);
               
-              // HAPUS bagian enforce saat playing - tidak efektif
-              // Cukup update current quality saja
               try {
                 const actualQuality = event.target.getPlaybackQuality();
                 setCurrentQuality(actualQuality);
               } catch (e) {
                 console.error('Quality update error:', e);
               }
-            } else if (event.data === 2) { // PAUSED
+            } else if (event.data === 2) {
               setIsPlaying(false);
-            } else if (event.data === 3) { // BUFFERING
-              // HAPUS bagian enforce saat buffering - tidak efektif
+            } else if (event.data === 3) {
               try {
                 const availableQ = event.target.getAvailableQualityLevels();
                 setAvailableQualities(availableQ);
@@ -727,30 +801,48 @@ export default function MusicPage() {
           playerRef.current = null;
         } catch (e) {}
       }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+        setAudioElement(null);
+      }
       if (timeUpdateIntervalRef.current) {
         window.clearInterval(timeUpdateIntervalRef.current);
       }
-      // TAMBAHAN: Cleanup quality monitoring
       if (qualityCheckIntervalRef.current) {
         window.clearInterval(qualityCheckIntervalRef.current);
         qualityCheckIntervalRef.current = null;
       }
     };
     
-  }, [currentSong, mounted]); 
+  }, [currentSong, mounted]);
 
   useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume / 100;
+    }
     if (playerRef.current && isPlayerReady && typeof playerRef.current.setVolume === 'function') {
       playerRef.current.setVolume(volume);
     }
   }, [volume, isPlayerReady]);
 
   useEffect(() => {
-    if (!playerRef.current || !isPlayerReady || typeof playerRef.current.playVideo !== 'function') return; 
-    
+  if (audioRef.current) {
+    if (isPlaying) {
+      audioRef.current.play().catch(e => {
+        console.error('Audio play error:', e);
+        setIsPlaying(false);
+      });
+    } else {
+      audioRef.current.pause();
+    }
+    return;
+  }
+
+  if (!playerRef.current || !isPlayerReady || typeof playerRef.current.playVideo !== 'function') return; 
     try {
       if (isPlaying) {
-        // Tambahkan timeout kecil untuk memastikan player siap
         const playTimeout = setTimeout(() => {
           if (playerRef.current && typeof playerRef.current.playVideo === 'function') {
             playerRef.current.playVideo();
@@ -763,11 +855,6 @@ export default function MusicPage() {
       }
     } catch (e) { console.error(e); }
   }, [isPlaying, isPlayerReady]);
-
-  const getYoutubeVideoId = (url: string) => {
-    const match = url.match(/[?&]v=([^&]+)/);
-    return match ? match[1] : null;
-  };
 
   const handleVideoEnded = () => {
     const currentRepeatMode = repeatModeRef.current;
@@ -1305,6 +1392,11 @@ export default function MusicPage() {
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const seekTime = parseInt(e.target.value, 10);
     setCurrentTime(seekTime);
+    
+    if (audioRef.current) {
+      audioRef.current.currentTime = seekTime;
+    }
+    
     if (playerRef.current && isPlayerReady) {
       playerRef.current.seekTo(seekTime, true);
     }
@@ -2015,10 +2107,8 @@ export default function MusicPage() {
           <div className="min-h-full flex items-center justify-center py-4">
             {currentSong ? (
               <>
-                {/* --- CONTAINER 1: VIDEO PLAYER (Visibility Diubah) --- */}
-                {/* Menggunakan kelas kustom untuk menyembunyikan tanpa display: none */}
                 <div 
-                  className={`w-full h-full flex flex-col items-center justify-center p-4 md:p-8 transition-all duration-300 ${mode === 'audio' ? 'player-invisible' : 'block'}`}
+                  className={`w-full h-full flex flex-col items-center justify-center p-4 md:p-8 transition-all duration-300 ${mode === 'audio' || isMp3File(currentSong.link) ? 'player-invisible' : 'block'}`}
                 >
                   <div className="w-full flex-1 flex items-center justify-center min-h-0">
                     <div className="w-full h-full bg-black rounded-lg overflow-hidden relative" style={{ maxHeight: '100%', aspectRatio: '16/9', maxWidth: 'min(100%, calc(100vh * 16/9))' }}>
@@ -2039,8 +2129,7 @@ export default function MusicPage() {
                   </div>
                 </div>
 
-                {/* --- CONTAINER 2: AUDIO UI (COVER ART) --- */}
-                <div className={`text-center max-w-md w-full transition-all duration-300 ${mode === 'video' ? 'hidden' : 'block'}`}>
+                <div className={`text-center max-w-md w-full transition-all duration-300 ${mode === 'video' && !isMp3File(currentSong.link) ? 'hidden' : 'block'}`}>
                   <div className="w-40 h-40 md:w-64 md:h-64 mx-auto bg-gradient-to-br from-purple-600 via-pink-500 to-blue-600 rounded-full flex items-center justify-center mb-6 md:mb-8 shadow-2xl animate-pulse-slow">
                     <Music size={60} className="md:w-[120px] md:h-[120px] text-white" />
                   </div>
@@ -2053,6 +2142,9 @@ export default function MusicPage() {
                     <p className="text-gray-500 text-xs md:text-sm px-4">
                       {currentSong.playlist.map(p => getPlaylistName(p)).join(', ')}
                     </p>
+                  )}
+                  {isMp3File(currentSong.link) && (
+                    <p className="text-blue-400 text-xs mt-2">🎵 Playing Local MP3</p>
                   )}
                 </div>
               </>

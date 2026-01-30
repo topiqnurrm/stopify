@@ -696,7 +696,7 @@ export const taufiq1: MusicItem[] = [
     {
         id: 37,
         judul: "Kingslayer (feat. BABYMETAL), Bring Me The Horizon, BABYMETAL",
-        link: "https://www.youtube.com/watch?v=eLwa_QiCvvU",
+        link: "/music/37.mp3",
         tahun: "2020 Oktober 30",
         added: "10 November 2020",
         playlist : [
