@@ -111,4 +111,59 @@ export const taufiq2: MusicItem[] = [
         ],
         added: "14 Juli 2021",
     },
+    {
+        id: 111,
+        judul: "Know Me Too Well (with Danna Paola), New Hope Club, Danna Paola",
+        link: "https://www.youtube.com/watch?v=TxwUQgmamk8",
+        tahun: "2019 oktober 10",
+        playlist : [
+            "b",
+            "2", "a", "8", "60",
+        ],
+        added: "20 Juli 2021",
+    },
+    {
+        id: 112,
+        judul: "Kiss Me More (feat. SZA), Doja Cat, SZA",
+        link: "https://www.youtube.com/watch?v=BnqjNxov_Q4",
+        tahun: "9 april 2021",
+        playlist : [
+            "b",
+            "2", "5", "7", "60",
+        ],
+        added: "27 Juli 2021",
+    },
+    {
+        id: 113,
+        judul: "Levitating (feat. DaBaby), Dua Lipa, DaBaby",
+        link: "https://www.youtube.com/watch?v=EUcWkpD8u6g",
+        tahun: "1 oktober 2020",
+        playlist : [
+            "b",
+            "2", "5", "7", "60", "h"
+        ],
+        added: "27 Juli 2021",
+    },
+    {
+        id: 114,
+        judul: "SO WHAT!, Rarin, BrxkenBxy",
+        link: "https://www.youtube.com/watch?v=OcIXFslvSLU",
+        tahun: "7 mei 2021",
+        playlist : [
+            "b",
+            "2", "d", "8", "60",
+        ],
+        added: "6 Agustus 2021",
+    },
+    {
+        id: 115,
+        judul: "Dandelions, Ruth B.",
+        link: "https://www.youtube.com/watch?v=Es7gknjmt1Q",
+        tahun: "5 mei 2017",
+        playlist : [
+            "b",
+            "3", "4", "h", "7", "60",
+        ],
+        added: "11 Agustus 2021",
+    },
 ];
