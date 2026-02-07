@@ -31,7 +31,7 @@ export const taufiq4: MusicItem[] = [
         added: "27 Desember 2025",
         playlist : [
             "b",
-            "2", "g", "8", "9",
+            "2", "g", "8", "9", 'm',
         ],
     },
     {
@@ -86,7 +86,7 @@ export const taufiq4: MusicItem[] = [
         added: "13 Desember 2025",
         playlist : [
             "b",
-            "2", "g", "8", "9",
+            "2", "g", "8", "9", 'm',
         ],
     },
     {

@@ -37,6 +37,7 @@ export const PLAYLIST_NAMES: Record<string, string> = {
   'j': "Classic",
   'k': "Else",
   'l': "Nadzar",
+  'm': "Hip Hop Papua",
   
   // Numeric keys (sebagai string)
   '1': "Nada Tinggi",

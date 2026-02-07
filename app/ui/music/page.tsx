@@ -1059,6 +1059,7 @@ export default function MusicPage() {
       { id: 'g', name: 'DJ' },
       { id: 'h', name: 'Love' },
       { id: 'j', name: 'Classic' },
+      { id: 'm', name: 'Hip Hop Papua' },
     ],
     jenis: [
       { id: '7', name: 'Nyanyiable' },
