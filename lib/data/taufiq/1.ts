@@ -234,7 +234,7 @@ export const taufiq1: MusicItem[] = [
     },
     {
         id: 79,
-        judul: "Celebrity, UI",
+        judul: "Celebrity, IU",
         link: "https://www.youtube.com/watch?v=Uu_-mdjXVVI",
         tahun: "2021 Januari 27",
         playlist : [

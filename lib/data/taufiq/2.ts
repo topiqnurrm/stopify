@@ -126,7 +126,7 @@ export const taufiq2: MusicItem[] = [
         id: 112,
         judul: "Kiss Me More (feat. SZA), Doja Cat, SZA",
         link: "https://www.youtube.com/watch?v=BnqjNxov_Q4",
-        tahun: "9 april 2021",
+        tahun: "2021 april 9",
         playlist : [
             "b",
             "2", "5", "7", "60",
@@ -137,7 +137,7 @@ export const taufiq2: MusicItem[] = [
         id: 113,
         judul: "Levitating (feat. DaBaby), Dua Lipa, DaBaby",
         link: "https://www.youtube.com/watch?v=EUcWkpD8u6g",
-        tahun: "1 oktober 2020",
+        tahun: "2020 oktober 1",
         playlist : [
             "b",
             "2", "5", "7", "60", "h"
@@ -148,7 +148,7 @@ export const taufiq2: MusicItem[] = [
         id: 114,
         judul: "SO WHAT!, Rarin, BrxkenBxy",
         link: "https://www.youtube.com/watch?v=OcIXFslvSLU",
-        tahun: "7 mei 2021",
+        tahun: "2021 mei 7",
         playlist : [
             "b",
             "2", "d", "8", "60",
@@ -159,10 +159,65 @@ export const taufiq2: MusicItem[] = [
         id: 115,
         judul: "Dandelions, Ruth B.",
         link: "https://www.youtube.com/watch?v=Es7gknjmt1Q",
-        tahun: "5 mei 2017",
+        tahun: "2017 mei 5",
         playlist : [
             "b",
             "3", "4", "h", "7", "60",
+        ],
+        added: "11 Agustus 2021",
+    },
+    {
+        id: 116,
+        judul: "Mendung Tanpo Udan, Ndarboy Genk",
+        link: "https://www.youtube.com/watch?v=xBRCTmijDBU",
+        tahun: "2021 juli 5",
+        playlist : [
+            "b",
+            "3", "4", "f", "7", "9",
+        ],
+        added: "11 Agustus 2021",
+    },
+    {
+        id: 117,
+        judul: "Tenang, Yura Yunita",
+        link: "https://www.youtube.com/watch?v=epRnMRXiMvU",
+        tahun: "2021 november 2",
+        playlist : [
+            "b",
+            "3", "5", "7", "9",
+        ],
+        added: "11 Agustus 2021",
+    },
+    {
+        id: 118,
+        judul: "Satru, Denny Caknan, Happy Asmara",
+        link: "https://www.youtube.com/watch?v=Q1bMVoENbFY",
+        tahun: "2021 januari 17",
+        playlist : [
+            "b",
+            "3", "4", "h", "7", "9", "f"
+        ],
+        added: "11 Agustus 2021",
+    },
+    {
+        id: 119,
+        judul: "Angel, Yeni Inka",
+        link: "https://www.youtube.com/watch?v=gBa36OvDnWA",
+        tahun: "2021 mei 12",
+        playlist : [
+            "b",
+            "3", "f", "h", "7", "9",
+        ],
+        added: "11 Agustus 2021",
+    },
+    {
+        id: 120,
+        judul: "Pamer Bojo, Didi Kempot",
+        link: "https://www.youtube.com/watch?v=po6CdiSGtiA",
+        tahun: "2016",
+        playlist : [
+            "b",
+            "3", "4", "f", "7", "9",
         ],
         added: "11 Agustus 2021",
     },
