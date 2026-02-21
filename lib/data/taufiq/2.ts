@@ -334,8 +334,8 @@ export const taufiq2: MusicItem[] = [
     {
         id: 131,
         judul: "Runtuh, Feby Putri, Fiersa Besari",
-        link: "https://www.youtube.com/watch?v=lMh-PlIyN3Q",
-        tahun: "2020 Februari 14",
+        link: "https://www.youtube.com/watch?v=cYsA61kuPUc",
+        tahun: "1 Oktober 2021",
         playlist : [
             "b",
             "2", "d", "5", "8", "144",
@@ -345,7 +345,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 132,
         judul: "ONLY, LeeHi",
-        link: "https://www.youtube.com/watch?v=lMh-PlIyN3Q",
+        link: "https://www.youtube.com/watch?v=WEOhrtFVByc",
         tahun: "2020 Februari 14",
         playlist : [
             "b",
@@ -356,7 +356,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 133,
         judul: "Pesan Terakhir, Lyodra",
-        link: "https://www.youtube.com/watch?v=lMh-PlIyN3Q",
+        link: "https://www.youtube.com/watch?v=eBfu1kzSMqU",
         tahun: "2020 Februari 14",
         playlist : [
             "b",
@@ -367,7 +367,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 134,
         judul: "It's You, Sezairi",
-        link: "https://www.youtube.com/watch?v=lMh-PlIyN3Q",
+        link: "https://www.youtube.com/watch?v=CGIPtF-YwG0",
         tahun: "2020 Februari 14",
         playlist : [
             "b",
@@ -378,7 +378,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 135,
         judul: "My Universe, Coldplay, BTS",
-        link: "https://www.youtube.com/watch?v=lMh-PlIyN3Q",
+        link: "https://www.youtube.com/watch?v=C1VjEOejDpo",
         tahun: "2020 Februari 14",
         playlist : [
             "b",
@@ -389,7 +389,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 136,
         judul: "Now I Know, Kaleb J",
-        link: "https://www.youtube.com/watch?v=lMh-PlIyN3Q",
+        link: "https://www.youtube.com/watch?v=S0pFdibQvJc",
         tahun: "2020 Februari 14",
         playlist : [
             "b",
@@ -400,7 +400,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 137,
         judul: "Bertaut, Nadin Amizah",
-        link: "https://www.youtube.com/watch?v=lMh-PlIyN3Q",
+        link: "https://www.youtube.com/watch?v=1xnIA8tqZ8U",
         tahun: "2020 Februari 14",
         playlist : [
             "b",
@@ -411,7 +411,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 138,
         judul: "LOCO, ITZY",
-        link: "https://www.youtube.com/watch?v=lMh-PlIyN3Q",
+        link: "https://www.youtube.com/watch?v=sqbh-3CLYHw",
         tahun: "2020 Februari 14",
         playlist : [
             "b",
@@ -422,7 +422,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 139,
         judul: "Bad Habits, Ed Sheeran",
-        link: "https://www.youtube.com/watch?v=lMh-PlIyN3Q",
+        link: "https://www.youtube.com/watch?v=gYl5Y2y_X8I",
         tahun: "2020 Februari 14",
         playlist : [
             "b",
@@ -433,7 +433,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 140,
         judul: "Pepas, Farruko",
-        link: "https://www.youtube.com/watch?v=lMh-PlIyN3Q",
+        link: "https://www.youtube.com/watch?v=-mfnbCDZ8pA",
         tahun: "2020 Februari 14",
         playlist : [
             "b",
