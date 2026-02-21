@@ -144,35 +144,102 @@ const getOriginUrl = (): string | undefined => {
   return undefined;
 };
 
-// Helper function untuk parse tanggal Indonesia (DD Bulan YYYY)
 const parseIndonesianDate = (dateStr: string): Date => {
+  if (!dateStr || !dateStr.trim()) return new Date(0);
+
   const monthMap: { [key: string]: number } = {
+    // Indonesia
     'Januari': 0, 'Februari': 1, 'Maret': 2, 'April': 3,
     'Mei': 4, 'Juni': 5, 'Juli': 6, 'Agustus': 7,
-    'September': 8, 'Oktober': 9, 'November': 10, 'Desember': 11
+    'September': 8, 'Oktober': 9, 'November': 10, 'Desember': 11,
+    // English (fallback)
+    'January': 0, 'February': 1, 'March': 2,
+    'May': 4, 'June': 5, 'July': 6, 'August': 7,
+    'October': 9, 'December': 11
+    // April, September, November sama di kedua bahasa
   };
+
+  const parts = dateStr.trim().split(/\s+/);
   
-  const parts = dateStr.trim().split(' ');
   if (parts.length !== 3) {
     console.warn('Invalid date format:', dateStr);
     return new Date(0);
   }
-  
+
   const day = parseInt(parts[0], 10);
   const monthName = parts[1];
   const month = monthMap[monthName];
   const year = parseInt(parts[2], 10);
-  
-  if (isNaN(day) || month === undefined || isNaN(year)) {
+
+  if (isNaN(day) || month === undefined || isNaN(year) || day < 1 || day > 31 || year < 1900) {
     console.warn('Invalid date components:', { day, month: monthName, year });
     return new Date(0);
   }
-  
-  const result = new Date(year, month, day);
-  // Debug: hapus setelah fix
-  // console.log(`Parsed: "${dateStr}" → ${result.toISOString()}`);
-  
-  return result;
+
+  return new Date(year, month, day);
+};
+
+const normalizeYear = (tahun: string): string => {
+  if (!tahun) return tahun;
+
+  const months = [
+    // Indonesia
+    'Januari','Februari','Maret','April','Mei','Juni',
+    'Juli','Agustus','September','Oktober','November','Desember',
+    // English
+    'January','February','March','May','June','July',
+    'August','October','December'
+    // April, September, November sama di kedua bahasa
+  ];
+
+  const parts = tahun.trim().split(/\s+/);
+
+  if (parts.length === 3 && /^\d{4}$/.test(parts[0])) {
+    return tahun;
+  }
+
+  if (
+    parts.length === 3 &&
+    /^\d{1,2}$/.test(parts[0]) &&
+    months.includes(parts[1]) &&
+    /^\d{4}$/.test(parts[2])
+  ) {
+    return `${parts[2]} ${parts[1]} ${parts[0]}`;
+  }
+
+  return tahun;
+};
+
+const parseTahunToTimestamp = (tahun: string | undefined): number => {
+  if (!tahun) return 0;
+
+  const monthMap: { [key: string]: number } = {
+    // Indonesia
+    'Januari': 0, 'Februari': 1, 'Maret': 2, 'April': 3,
+    'Mei': 4, 'Juni': 5, 'Juli': 6, 'Agustus': 7,
+    'September': 8, 'Oktober': 9, 'November': 10, 'Desember': 11,
+    // English
+    'January': 0, 'February': 1, 'March': 2,
+    'May': 4, 'June': 5, 'July': 6, 'August': 7,
+    'October': 9, 'December': 11
+  };
+
+  const parts = tahun.trim().split(/\s+/);
+
+  if (parts.length === 3 && /^\d{4}$/.test(parts[0]) && monthMap[parts[1]] !== undefined) {
+    return new Date(parseInt(parts[0]), monthMap[parts[1]], parseInt(parts[2])).getTime();
+  }
+
+  if (parts.length === 3 && /^\d{1,2}$/.test(parts[0]) && monthMap[parts[1]] !== undefined && /^\d{4}$/.test(parts[2])) {
+    return new Date(parseInt(parts[2]), monthMap[parts[1]], parseInt(parts[0])).getTime();
+  }
+
+  if (parts.length === 1 && /^\d{4}$/.test(parts[0])) {
+    return new Date(parseInt(parts[0]), 0, 1).getTime();
+  }
+
+  const match = tahun.match(/\d{4}/);
+  return match ? new Date(parseInt(match[0]), 0, 1).getTime() : 0;
 };
 
 export default function MusicPage() {
@@ -988,26 +1055,22 @@ export default function MusicPage() {
         return sorted.sort((a, b) => b.judul.localeCompare(a.judul, 'id', { sensitivity: 'base' }));
       case 'tahun-asc':
         return sorted.sort((a, b) => {
-          const yearA = a.tahun || '0';
-          const yearB = b.tahun || '0';
-          return yearA.localeCompare(yearB);
+          return parseTahunToTimestamp(a.tahun) - parseTahunToTimestamp(b.tahun);
         });
       case 'tahun-desc':
         return sorted.sort((a, b) => {
-          const yearA = a.tahun || '0';
-          const yearB = b.tahun || '0';
-          return yearB.localeCompare(yearA);
+          return parseTahunToTimestamp(b.tahun) - parseTahunToTimestamp(a.tahun);
         });
       case 'added-asc':
         return sorted.sort((a, b) => {
-          const dateA = parseIndonesianDate(a.added || '1 Januari 1970');
-          const dateB = parseIndonesianDate(b.added || '1 Januari 1970');
+          const dateA = a.added ? parseIndonesianDate(a.added) : new Date(8640000000000000);
+          const dateB = b.added ? parseIndonesianDate(b.added) : new Date(8640000000000000);
           return dateA.getTime() - dateB.getTime();
         });
       case 'added-desc':
         return sorted.sort((a, b) => {
-          const dateA = parseIndonesianDate(a.added || '1 Januari 1970');
-          const dateB = parseIndonesianDate(b.added || '1 Januari 1970');
+          const dateA = a.added ? parseIndonesianDate(a.added) : new Date(0);
+          const dateB = b.added ? parseIndonesianDate(b.added) : new Date(0);
           return dateB.getTime() - dateA.getTime();
         });
       default:
@@ -2028,7 +2091,7 @@ export default function MusicPage() {
                         }`}>
                           {song.tahun && (
                             <>
-                              <span>{song.tahun}</span>
+                              <span>{normalizeYear(song.tahun)}</span>
                               <span>•</span>
                             </>
                           )}
@@ -2119,7 +2182,7 @@ export default function MusicPage() {
                   <div className="mt-4 text-center flex-shrink-0 max-h-[20%] overflow-y-auto">
                     <h2 className="text-lg md:text-xl lg:text-2xl font-bold">{currentSong.judul}</h2>
                     <p className="text-gray-400 text-xs md:text-sm">
-                      {currentSong.tahun && `${currentSong.tahun} • `}
+                      {currentSong.tahun && `${normalizeYear(currentSong.tahun)} • `}
                       {currentSong.added && `Added ${currentSong.added}`}
                     </p>
                     {currentSong.playlist && currentSong.playlist.length > 0 && (
@@ -2136,7 +2199,7 @@ export default function MusicPage() {
                   </div>
                   <h1 className="text-xl md:text-3xl font-bold mb-2 px-4">{currentSong.judul}</h1>
                   <p className="text-gray-400 text-sm md:text-lg mb-4">
-                    {currentSong.tahun && `${currentSong.tahun} • `}
+                    {currentSong.tahun && `${normalizeYear(currentSong.tahun)} • `}
                     {currentSong.added && `Added ${currentSong.added}`}
                   </p>
                   {currentSong.playlist && currentSong.playlist.length > 0 && (
@@ -2464,7 +2527,7 @@ export default function MusicPage() {
                   >
                     <div className="font-semibold text-sm truncate">{song.judul}</div>
                     <div className="text-xs text-gray-400 truncate">
-                      {song.tahun && `${song.tahun} • `}
+                      {song.tahun && `${normalizeYear(song.tahun)} • `}
                       {song.added && `Added ${song.added}`}
                       {song.negara && ` • ${song.negara}`}
                     </div>
