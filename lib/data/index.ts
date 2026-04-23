@@ -4,6 +4,8 @@ import { taufiq1 } from './taufiq/1';
 import { taufiq2 } from './taufiq/2';
 import { taufiq4 } from './taufiq/4';
 import { nadzar1 } from './nadzar/1';
+import { taufiq3 } from './taufiq/3';
+
 // import { nadya1 } from './nadya/1'; // uncomment jika sudah ada
 
 export interface MusicDatabase {
@@ -19,6 +21,7 @@ export const allMusicData: MusicDatabase = {
   taufiq: {
     '1': taufiq1,
     '2': taufiq2,
+    '3': taufiq3,
     '4': taufiq4,
   },
   nadzar: {
