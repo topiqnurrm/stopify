@@ -444,7 +444,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 141,
         judul: "Woman, Doja Cat",
-        link: "https://www.youtube.com/watch?v=-5V7nYshZiS8",
+        link: "https://www.youtube.com/watch?v=5V7nYshZiS8",
         tahun: "25 Juni 2021",
         playlist: ["b", "2", "d", "g", "8", "62"],
         added: "12 October 2021",
@@ -452,7 +452,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 142,
         judul: "Todo De Ti, Rauw Alejandro",
-        link: "https://www.youtube.com/watch?v=-fLgbveRkhyU",
+        link: "https://www.youtube.com/watch?v=fLgbveRkhyU",
         tahun: "20 Mei 2021",
         playlist: ["b", "2", "d", "g", "8", "62"],
         added: "12 October 2021",
@@ -460,7 +460,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 143,
         judul: "Easy On Me, Adele",
-        link: "https://www.youtube.com/watch?v=-3neLTOhMgB4",
+        link: "https://www.youtube.com/watch?v=3neLTOhMgB4",
         tahun: "15 Oktober 2021",
         playlist: ["b", "2", "d", "g", "8", "62"],
         added: "9 November 2021",
@@ -476,7 +476,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 145,
         judul: "I Love You So, The Walters",
-        link: "https://www.youtube.com/watch?v=-yK_8U74hk_E",
+        link: "https://www.youtube.com/watch?v=yK_8U74hk_E",
         tahun: "28 November 2014",
         playlist: ["b", "2", "d", "g", "8", "62"],
         added: "9 November 2021",
@@ -484,7 +484,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 146,
         judul: "MONTAGEM SENDITA, ANDROMEDA, MVSTERIOUS",
-        link: "https://www.youtube.com/watch?v=-PFetnjKzyuY",
+        link: "https://www.youtube.com/watch?v=PFetnjKzyuY",
         tahun: "15 september 2025",
         playlist: ["b", "2", "d", "g", "8", "62"],
         added: "16 Mei 2026",
@@ -492,7 +492,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 147,
         judul: "Toxic, BoyWithUke",
-        link: "https://www.youtube.com/watch?v=-If8D5QrAT4s",
+        link: "https://www.youtube.com/watch?v=If8D5QrAT4s",
         tahun: "29 Oktober 2021",
         playlist: ["b", "2", "d", "g", "8", "62"],
         added: "18 November 2021",
@@ -500,7 +500,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 148,
         judul: "Man Upon the Hill, Stars and Rabbit",
-        link: "https://www.youtube.com/watch?v=-VgNtGroyUjI",
+        link: "https://www.youtube.com/watch?v=VgNtGroyUjI",
         tahun: "15 Mei 2015",
         playlist: ["b", "2", "d", "g", "8", "62"],
         added: "25 November 2021",
@@ -508,7 +508,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 149,
         judul: "You're Gonna Live Forever in Me, John Mayer",
-        link: "https://www.youtube.com/watch?v=-Q_sgqVUl3FA",
+        link: "https://www.youtube.com/watch?v=Q_sgqVUl3FA",
         tahun: "20 Januari 2017",
         playlist: ["b", "2", "d", "g", "8", "62"],
         added: "25 November 2021",
@@ -516,7 +516,7 @@ export const taufiq2: MusicItem[] = [
     {
         id: 150,
         judul: "Sanctuary, Joji",
-        link: "https://www.youtube.com/watch?v=-ppxSQ7qxJPI",
+        link: "https://www.youtube.com/watch?v=ppxSQ7qxJPI",
         tahun: "14 Juni 2019",
         playlist: ["b", "2", "d", "g", "8", "62"],
         added: "12 December 2021",
