@@ -2,6 +2,19 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq4: MusicItem[] = [
     {
+        id: 372,
+        judul: "Love Story, Indila",
+        link: "https://www.youtube.com/watch?v=K1YTTHKG1Ls",
+        tahun: "2015",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        // added: "31 Mei 2021",
+    },
+
+    
+    {
         id: 367,
         judul: "Jauh Ko Pergi, Kharis Sopan",
         link: "https://www.youtube.com/watch?v=SNso8BRDYXw",

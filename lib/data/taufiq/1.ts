@@ -135,7 +135,7 @@ export const taufiq1: MusicItem[] = [
     },
     {
         id: 88,
-        judul: "MANTE MÁ, Nakama, Mc Staff",
+        judul: "MENTE MÁ, Nakama, Mc Staff",
         link: "https://www.youtube.com/watch?v=nlXeBShsF9c",
         tahun: "2025 Mei 16",
         playlist : [
