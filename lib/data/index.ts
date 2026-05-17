@@ -1,5 +1,6 @@
 // lib/data/index.ts
 import { MusicItem } from '@/lib/musicData';
+import { none1 } from './taufiq/none1';
 import { taufiq1 } from './taufiq/1';
 import { taufiq2 } from './taufiq/2';
 import { taufiq4 } from './taufiq/4';
@@ -19,6 +20,7 @@ export interface MusicDatabase {
 
 export const allMusicData: MusicDatabase = {
   taufiq: {
+    'none1': none1,
     '1': taufiq1,
     '2': taufiq2,
     '3': taufiq3,

@@ -1,0 +1,268 @@
+import { MusicItem } from '@/lib/musicData';
+
+export const none1: MusicItem[] = [
+    {
+        id: "none1",
+        judul: "Stephanie (Adnan Veron x Mugitha Edit)",
+        link: "https://www.youtube.com/watch?v=EkEWCNwBWpU",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none2",
+        judul: "BARUDAK PHONK TERROR",
+        link: "https://www.youtube.com/watch?v=DNKqiBWZM30",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none3",
+        judul: "VOIS SUR TON CHEMIN (WHISNU SANTIKA EDIT)",
+        link: "https://www.youtube.com/watch?v=DNKqiBWZM30",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none4",
+        judul: "Flo Rida - GDFR ft. Sage The Gemini and Lookas ( R!kku Edit )",
+        link: "/music/none4.mp3",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none5",
+        judul: "lowkey x Low - AmsterBoy Edit",
+        link: "https://www.youtube.com/watch?v=sBC3uw4wnxY",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none6",
+        judul: "Bhabi (hbrp, Adnan Veron Edit)",
+        link: "/music/none6.mp3",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none7",
+        judul: "BREAKBEAT CONCRETE ANGEL SLOW REVERB 2026_ LIRIK CONCRETE ANGEL VIRAL TIKTOK _ D",
+        link: "https://www.youtube.com/watch?v=xUpE8bBMxjM",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none8",
+        judul: "Naughty Girl",
+        link: "https://www.youtube.com/watch?v=nEZ6J1BR5hI",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none9",
+        judul: "BABY DON'T GO - AMSTERBOY EDIT (FREE DOWNLOAD) #becakarmy",
+        link: "https://www.youtube.com/watch?v=VGv_z5CSclE",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none10",
+        judul: "Bukan WG x fahmyfay x DJ Yasmin x Joana - hrny",
+        link: "https://www.youtube.com/watch?v=d5FRsILVV6U",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none11",
+        judul: "Shake It Up",
+        link: "https://www.youtube.com/watch?v=8qfgkLQyjcU",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none12",
+        judul: "FOLDED (NGHTYBOY 'HIPDUT' EDIT)",
+        link: "https://www.youtube.com/watch?v=ed9WS18Zxak",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none13",
+        judul: "Freak It Up",
+        link: "/music/none13.mp3",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none14",
+        judul: "DJ BODY PATA PATA CANTIK JELITA SLOW VIRAL TIKTOK FULL SONG MAMAN FVNDY 2026",
+        link: "https://www.youtube.com/watch?v=XRp-BmNyjos",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none15",
+        judul: "DJ BOY JANGAN MALU MALU BOY SLOW VIRAL TIKTOK FULL SONG MAMAN FVNDY 2026",
+        link: "https://www.youtube.com/watch?v=Nqr7Oc1ssgY",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none16",
+        judul: "Cartel",
+        link: "https://www.youtube.com/watch?v=C117oOEAqZ0",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none17",
+        judul: "Adnan Veron, Erga, Liquid Silva - Lowkey",
+        link: "https://www.youtube.com/watch?v=rjeTpYA3cYg",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none18",
+        judul: "Whisnu Santika ft. Liquid Silva - Que Pasa",
+        link: "https://www.youtube.com/watch?v=AZlH8aoI5G4",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none19",
+        judul: "hoRRReg (hbrp Edit)",
+        link: "https://www.youtube.com/watch?v=Bw7ce1CWHTY",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none20",
+        judul: "Aria Freaks Stadium",
+        link: "https://www.youtube.com/watch?v=Dm_WjEM-rK8",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none21",
+        judul: "Blah Blah Bad (Wyntella, Nauv Edit)",
+        link: "https://www.youtube.com/watch?v=vbNSfOLiYrE",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none22",
+        judul: "Up To No Good (Adnan Veron, Steve Chris Edit)",
+        link: "https://www.youtube.com/watch?v=xxx",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none23",
+        judul: "TREMOR (LENN x DEKA BREAKBEAT EDIT)",
+        link: "https://www.youtube.com/watch?v=xxx",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+    {
+        id: "none24",
+        judul: "Steve Chris, Venes - Smile (Official Music Video)",
+        link: "https://www.youtube.com/watch?v=xxx",
+        // tahun: "xxx",
+        playlist : [
+            "b",
+            "1", "6", "3", "7", "59",
+        ],
+        added: "17 Mei 2026",
+    },
+];
