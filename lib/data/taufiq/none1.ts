@@ -8,29 +8,29 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
     {
         id: "none2",
         judul: "BARUDAK PHONK TERROR",
-        link: "https://www.youtube.com/watch?v=DNKqiBWZM30",
+        link: "https://www.youtube.com/watch?v=an84fBW7f6c",
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
     {
         id: "none3",
         judul: "VOIS SUR TON CHEMIN (WHISNU SANTIKA EDIT)",
-        link: "https://www.youtube.com/watch?v=DNKqiBWZM30",
+        link: "https://www.youtube.com/watch?v=67wpZ_d74LI",
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -41,7 +41,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -52,7 +52,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -63,7 +63,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -74,7 +74,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -85,7 +85,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -96,7 +96,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -107,7 +107,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -118,7 +118,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -129,7 +129,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -140,7 +140,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -151,7 +151,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -162,7 +162,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -173,7 +173,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -184,7 +184,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -195,7 +195,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -206,7 +206,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -217,7 +217,7 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "6", "8", "60",
         ],
         added: "17 Mei 2026",
     },
@@ -228,40 +228,40 @@ export const none1: MusicItem[] = [
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
     {
         id: "none22",
         judul: "Up To No Good (Adnan Veron, Steve Chris Edit)",
-        link: "https://www.youtube.com/watch?v=xxx",
+        link: "/music/none22.mp3",
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
     {
         id: "none23",
         judul: "TREMOR (LENN x DEKA BREAKBEAT EDIT)",
-        link: "https://www.youtube.com/watch?v=xxx",
+        link: "https://www.youtube.com/watch?v=6jHwKBbISLA",
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "8", "60",
         ],
         added: "17 Mei 2026",
     },
     {
         id: "none24",
         judul: "Steve Chris, Venes - Smile (Official Music Video)",
-        link: "https://www.youtube.com/watch?v=xxx",
+        link: "https://www.youtube.com/watch?v=domj98_TJok",
         // tahun: "xxx",
         playlist : [
             "b",
-            "1", "6", "3", "7", "59",
+            "2", "g", "7", "60",
         ],
         added: "17 Mei 2026",
     },
