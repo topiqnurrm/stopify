@@ -7,7 +7,7 @@ export const taufiq4: MusicItem[] = [
         link: "https://www.youtube.com/watch?v=hY8NoReEeOI",
         tahun: "16 March 2026",
         playlist: ["b", "2", "1", "f", "4", "7", "9"],
-        added: "3 weeks ago",
+        added: "25 Juni 2026",
     },
     {
         id: 380,
@@ -82,7 +82,7 @@ export const taufiq4: MusicItem[] = [
             "b",
             "1", "6", "3", "7", "59",
         ],
-        // added: "31 Mei 2021",
+        added: "30 Maret 2026",
     },
 
     
@@ -95,7 +95,7 @@ export const taufiq4: MusicItem[] = [
             "b",
             "2", "g", "8", "9",
         ],
-        // added: "13 Desember 2025",
+        added: "23 Januari 2026",
     },
     {
         id: 366,
@@ -106,7 +106,7 @@ export const taufiq4: MusicItem[] = [
             "b",
             "2", "g", "8", "9",
         ],
-        // added: "13 Desember 2025",
+        added: "14 Januari 2026",
     },
     {
         id: 365,

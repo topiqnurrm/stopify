@@ -2,6 +2,22 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq2: MusicItem[] = [
     {
+        id: 192,
+        judul: "Gone - ROSÉ",
+        link: "https://www.youtube.com/watch?v=ihRqCPzZNvQ",
+        tahun: "12 March 2021",
+        playlist: ["b", "3", "1", "4", "7", "60"],
+        added: "18 Nov 2022",
+    },
+    {
+        id: 191,
+        judul: "Favorite Girl - Justin Bieber",
+        link: "https://www.youtube.com/watch?v=Npfzt3ljZVw",
+        tahun: "4 November 2009",
+        playlist: ["b", "3", "5", "7", "60"],
+        added: "18 Nov 2022",
+    },
+    {
         id: 190,
         judul: "El Melouk - Ahmed Saad, 3enba, Double Zuksh",
         link: "https://www.youtube.com/watch?v=O7YnN84_a54",
