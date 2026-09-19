@@ -2,6 +2,22 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq2: MusicItem[] = [
     {
+        id: 194,
+        judul: "Kau Rumahku - raissa anggiani",
+        link: "https://www.youtube.com/watch?v=AF0KQ6OSMxo",
+        tahun: "10 Januari 2022",
+        playlist: ["b", "3", "1", "6", "7", "9"],
+        added: "22 December 2022",
+    },
+    {
+        id: 193,
+        judul: "I Like You So Much, You'll Know It - Honey Jemlan",
+        link: "https://www.youtube.com/watch?v=nT3ZvhziKgw",
+        tahun: "15 Agustus 2019",
+        playlist: ["b", "2", "1", "5", "7", "60"],
+        added: "18 Nov 2022",
+    },
+    {
         id: 192,
         judul: "Gone - ROSÉ",
         link: "https://www.youtube.com/watch?v=ihRqCPzZNvQ",
