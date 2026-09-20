@@ -2,6 +2,22 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq2: MusicItem[] = [
     {
+        id: 196,
+        judul: "Perahu Kertas (tulus) - Maudy Ayunda 2012",
+        link: "https://www.youtube.com/watch?v=dUnAAN2a44E",
+        tahun: "28 April 2019",
+        playlist: ["b", "3", "1", "4", "8", "9"],
+        added: "15 January 2023",
+    },
+    {
+        id: 195,
+        judul: "Old Love - yuji, putri dahlia",
+        link: "https://www.youtube.com/watch?v=BcioZCk-Qyk",
+        tahun: "19 Agustus 2022",
+        playlist: ["b", "3", "1", "h", "8", "60"],
+        added: "2 January 2023",
+    },
+    {
         id: 194,
         judul: "Kau Rumahku - raissa anggiani",
         link: "https://www.youtube.com/watch?v=AF0KQ6OSMxo",
