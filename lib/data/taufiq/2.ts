@@ -2,6 +2,22 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq2: MusicItem[] = [
     {
+        id: 198,
+        judul: "golden hour - JVKE",
+        link: "https://www.youtube.com/watch?v=690F3X5Hcns",
+        tahun: "15 Juli 2022",
+        playlist: ["b", "2", "1", "a", "8", "60"],
+        added: "26 January 2023",
+    },
+    {
+        id: 197,
+        judul: "Those Eyes - New West",
+        link: "https://www.youtube.com/watch?v=8nEL-ktm3GA",
+        tahun: "10 Mei 2019",
+        playlist: ["b", "3", "1", "4", "8", "60"],
+        added: "26 January 2023",
+    },
+    {
         id: 196,
         judul: "Perahu Kertas (tulus) - Maudy Ayunda 2012",
         link: "https://www.youtube.com/watch?v=dUnAAN2a44E",
