@@ -2,6 +2,22 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq2: MusicItem[] = [
     {
+        id: 200,
+        judul: "Sempurna - Andra & The Backbone",
+        link: "https://www.youtube.com/watch?v=bE3r_Ic1Yv4",
+        tahun: "17 Januari 2007",
+        playlist: ["b", "3", "a", "8", "9"],
+        added: "1 February 2023",
+    },
+    {
+        id: 199,
+        judul: "MONTAGEM RUGADA - cape, JXNDRO, Sayfalse",
+        link: "https://www.youtube.com/watch?v=iBRWKep2h2E",
+        tahun: "27 Agustus 2025",
+        playlist: ["b", "2", "e", "8", "124"],
+        added: "22 September 2026",
+    },
+    {
         id: 198,
         judul: "golden hour - JVKE",
         link: "https://www.youtube.com/watch?v=690F3X5Hcns",
