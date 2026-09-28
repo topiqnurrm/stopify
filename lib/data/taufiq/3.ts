@@ -2,6 +2,22 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq3: MusicItem[] = [
     {
+        id: 206,
+        judul: "Not You — Alan Walker, Emma Steinbakken",
+        link: "https://www.youtube.com/watch?v=HhYGFId2ONU",
+        tahun: "3 December 2021",
+        playlist : ["b", "3", "4", "1", "8", "60"],
+        added: "16 May 2023",
+    },
+    {
+        id: 205,
+        judul: "Cupid - Twin Ver. — FIFTY FIFTY",
+        link: "https://www.youtube.com/watch?v=92yJhTzquoo",
+        tahun: "24 February 2023",
+        playlist : ["b", "3", "5", "h", "8", "60"],
+        added: "26 April 2023",
+    },
+    {
         id: 204,
         judul: "Saat Kau Telah Mengerti — Virgoun",
         link: "https://www.youtube.com/watch?v=xXq42vXv02g",
