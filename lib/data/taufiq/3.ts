@@ -2,6 +2,22 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq3: MusicItem[] = [
     {
+        id: 208,
+        judul: "Boy's a liar Pt. 2 — PinkPantheress, Ice Spice",
+        link: "https://www.youtube.com/watch?v=udI2idx0WUY",
+        tahun: "3 Februari 2023",
+        playlist : ["b", "3", "1", "d", "7", "60"],
+        added: "22 May 2023",
+    },
+    {
+        id: 207,
+        judul: "Collide (feat. Tyga) — Justine Skye, Tyga",
+        link: "https://www.youtube.com/watch?v=noGc394s1-0",
+        tahun: "25 Agustus 2014",
+        playlist : ["b", "2", "5", "d", "8", "60"],
+        added: "22 May 2023",
+    },
+    {
         id: 206,
         judul: "Not You — Alan Walker, Emma Steinbakken",
         link: "https://www.youtube.com/watch?v=HhYGFId2ONU",
