@@ -2,6 +2,22 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq3: MusicItem[] = [
     {
+        id: 210,
+        judul: "Daylight — Taylor Swift",
+        link: "https://www.youtube.com/watch?v=MuM8sbRBjaU",
+        tahun: "23 Agustus 2019",
+        playlist : ["b", "3", "1", "5", "7", "60"],
+        added: "21 Juni 2023",
+    },
+    {
+        id: 209,
+        judul: "Daylight — David Kushner",
+        link: "https://www.youtube.com/watch?v=r7AkVtshcYI",
+        tahun: "14 April 2023",
+        playlist : ["b", "3", "1", "5", "7", "60"],
+        added: "21 Juni 2023",
+    },
+    {
         id: 208,
         judul: "Boy's a liar Pt. 2 — PinkPantheress, Ice Spice",
         link: "https://www.youtube.com/watch?v=udI2idx0WUY",
