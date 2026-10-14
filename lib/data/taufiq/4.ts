@@ -159,6 +159,22 @@ export const taufiq4: MusicItem[] = [
 
     
     {
+        id: 369,
+        judul: "From The Start — Laufey",
+        link: "https://www.youtube.com/watch?v=48EoZ2WjYAo",
+        tahun: "11 May 2023",
+        playlist : ["b","3", "1", "8", "60"],
+        added: "24 February 2026",
+    },
+    {
+        id: 368,
+        judul: "The Fate of Ophelia — Taylor Swift",
+        link: "https://www.youtube.com/watch?v=YFN57kqwZWg",
+        tahun: "3 October 2025",
+        playlist : ["b", "3", "5", "1", "7", "60"],
+        added: "14 February 2026",
+    },
+    {
         id: 367,
         judul: "Jauh Ko Pergi, Kharis Sopan",
         link: "https://www.youtube.com/watch?v=SNso8BRDYXw",
