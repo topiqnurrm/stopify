@@ -156,8 +156,22 @@ export const taufiq4: MusicItem[] = [
         ],
         added: "30 Maret 2026",
     },
-
-    
+    {
+        id: 371,
+        judul: "Golden — HUNTR/X, EJAE, AUDREY NUNA, REI AMI, KPop Demon Hunters Cast",
+        link: "https://www.youtube.com/watch?v=GzPkgxaKvrk",
+        tahun: "15 March 2025",
+        playlist : ["b", "2", "1", "5", "7", "60"],
+        added: "29 March 2026",
+    },
+    {
+        id: 370,
+        judul: "So Easy (To Fall In Love) — Olivia Dean",
+        link: "https://www.youtube.com/watch?v=azclOlIqKCQ",
+        tahun: "26 September 2025",
+        playlist : ["b", "3", "5", "1", "7", "60"],
+        added: "24 February 2026",
+    },
     {
         id: 369,
         judul: "From The Start — Laufey",
