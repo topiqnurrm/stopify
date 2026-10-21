@@ -2,6 +2,46 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq3: MusicItem[] = [
     {
+        id: 215,
+        judul: "Seven (feat. Latto) — Jung Kook, Latto",
+        link: "https://www.youtube.com/watch?v=4enSPArvS78",
+        tahun: "14 July 2023",
+        playlist : ["b", "2", "1", "5", "d", "7", "60"],
+        added: "26 August 2023",
+    },
+    {
+        id: 214,
+        judul: "Nanti Kita Seperti Ini — Batas Senja",
+        link: "https://www.youtube.com/watch?v=B2X0ksLfIqo",
+        tahun: "4 March 2022",
+        playlist : ["b", "3", "1", "h", "7", "9"],
+        added: "26 August 2023",
+    },
+    {
+        id: 213,
+        judul: "Rayuan Perempuan Gila — Nadin Amizah",
+        link: "https://www.youtube.com/watch?v=5i-Oqxn8yWA",
+        tahun: "23 June 2023",
+        playlist : ["b", "3", "1", "h", "7", "9"],
+        added: "26 August 2023",
+    },
+    {
+        id: 212,
+        judul: "Moonlight — Kali Uchis",
+        link: "https://www.youtube.com/watch?v=nV5wWqks_MY",
+        tahun: "24 February 2023",
+        playlist : ["b", "3", "1", "h", "8", "60"],
+        added: "30 June 2023",
+    },
+    {
+        id: 211,
+        judul: "UNDERSTAND — keshi",
+        link: "https://www.youtube.com/watch?v=O3WMq5tOrE8",
+        tahun: "25 March 2022",
+        playlist : ["b", "3", "1", "4", "8", "60"],
+        added: "29 June 2023",
+    },
+    {
         id: 210,
         judul: "Daylight — Taylor Swift",
         link: "https://www.youtube.com/watch?v=MuM8sbRBjaU",
