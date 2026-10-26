@@ -2,6 +2,46 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq3: MusicItem[] = [
     {
+        id: 220,
+        judul: "TAKA LA DENTRO — SEKIMANE, shonci, Mc Gw",
+        link: "https://www.youtube.com/watch?v=jdktJB0THtY",
+        tahun: "17 April 2024",
+        playlist : ["b", "2", "e", "8", "69"],
+        added: "23 Oktober 2026",
+    },
+    {
+        id: 219,
+        judul: "Heart Attack — Demi Lovato",
+        link: "https://www.youtube.com/watch?v=v_5in4c3WDQ",
+        tahun: "25 February 2013",
+        playlist : ["b", "2", "1", "6", "7", "60"],
+        added: "15 October 2023",
+    },
+    {
+        id: 218,
+        judul: "Paint The Town Red — Doja Cat",
+        link: "https://www.youtube.com/watch?v=tSGRf0ZsU_w",
+        tahun: "4 August 2023",
+        playlist : ["b", "3", "d", "5", "7", "60"],
+        added: "5 October 2023",
+    },
+    {
+        id: 217,
+        judul: "Tattoo — Loreen",
+        link: "https://www.youtube.com/watch?v=PdmgJ8VdZLk",
+        tahun: "25 February 2023",
+        playlist : ["b", "2", "1", "6", "7", "60"],
+        added: "5 October 2023",
+    },
+    {
+        id: 216,
+        judul: "What It Is (Solo Version) — Doechii",
+        link: "https://www.youtube.com/watch?v=JBY7si0yZZE",
+        tahun: "17 March 2023",
+        playlist : ["b", "2", "1", "5", "7", "60"],
+        added: "27 September 2023",
+    },
+    {
         id: 215,
         judul: "Seven (feat. Latto) — Jung Kook, Latto",
         link: "https://www.youtube.com/watch?v=4enSPArvS78",
