@@ -2,6 +2,46 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq3: MusicItem[] = [
     {
+        id: 225,
+        judul: "Bercinta Lewat Kata - From 'Jatuh Cinta Seperti di Film-Film' — Donne Maula",
+        link: "https://www.youtube.com/watch?v=qzYIvrnbflU",
+        tahun: "26 July 2023",
+        playlist : ["b", "3", "a", "7", "9"],
+        added: "22 Dec 2023",
+    },
+    {
+        id: 224,
+        judul: "Karena Kamu — Geisha",
+        link: "https://www.youtube.com/watch?v=ujTNHzeNEkE",
+        tahun: "21 March 2011",
+        playlist : ["b", "2", "1", "5", "7", "9"],
+        added: "22 Dec 2023",
+    },
+    {
+        id: 223,
+        judul: "My Love Mine All Mine — Mitski",
+        link: "https://www.youtube.com/watch?v=1vjPT7ueIvg",
+        tahun: "15 September 2023",
+        playlist : ["b", "3", "1", "4", "8", "60"],
+        added: "22 Dec 2023",
+    },
+    {
+        id: 222,
+        judul: "Sweater Weather — The Neighbourhood",
+        link: "https://www.youtube.com/watch?v=IEcgnwk7VG8",
+        tahun: "28 March 2012",
+        playlist : ["b", "2", "1", "a", "8", "60"],
+        added: "30 Nov 2023",
+    },
+    {
+        id: 221,
+        judul: "Flowers — Miley Cyrus",
+        link: "https://www.youtube.com/watch?v=viw_ykjfJhA",
+        tahun: "12 January 2023",
+        playlist : ["b", "2", "1", "a", "8", "60"],
+        added: "30 Nov 2023",
+    },
+    {
         id: 220,
         judul: "TAKA LA DENTRO — SEKIMANE, shonci, Mc Gw",
         link: "https://www.youtube.com/watch?v=jdktJB0THtY",
