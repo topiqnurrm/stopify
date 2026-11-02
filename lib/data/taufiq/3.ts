@@ -2,6 +2,46 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq3: MusicItem[] = [
     {
+        id: 230,
+        judul: "Satu-Satu — Idgitaf",
+        link: "https://www.youtube.com/watch?v=N0_mOLAtacE",
+        tahun: "8 June 2022",
+        playlist : ["b", "3", "1", "5", "7", "9"],
+        added: "22 Dec 2023",
+    },
+    {
+        id: 229,
+        judul: "Lampu Merah — The Lantis",
+        link: "https://www.youtube.com/watch?v=jXQfCZDYk9s",
+        tahun: "26 July 2023",
+        playlist : ["b", "3", "a", "8", "9"],
+        added: "22 Dec 2023",
+    },
+    {
+        id: 228,
+        judul: "Hapus Aku — Nidji",
+        link: "https://www.youtube.com/watch?v=sXUNDMSLtSQ",
+        tahun: "2005",
+        playlist : ["b", "1", "2", "4", "7", "9"],
+        added: "22 Dec 2023",
+    },
+    {
+        id: 227,
+        judul: "KISINAN 2 — Masdddho",
+        link: "https://www.youtube.com/watch?v=orqVgEdlHyA",
+        tahun: "17 September 2023",
+        playlist : ["b", "2", "f", "8", "9"],
+        added: "22 Dec 2023",
+    },
+    {
+        id: 226,
+        judul: "Take A Chance With Me — NIKI",
+        link: "https://www.youtube.com/watch?v=SbCSWyxmX18",
+        tahun: "12 August 2022",
+        playlist : ["b", "3", "1", "h", "7", "60"],
+        added: "22 Dec 2023",
+    },
+    {
         id: 225,
         judul: "Bercinta Lewat Kata - From 'Jatuh Cinta Seperti di Film-Film' — Donne Maula",
         link: "https://www.youtube.com/watch?v=qzYIvrnbflU",
