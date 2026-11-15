@@ -2,6 +2,46 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq3: MusicItem[] = [
     {
+        id: 235,
+        judul: "Who I Am — Alan Walker, Putri Ariani, Peder Elias",
+        link: "https://www.youtube.com/watch?v=xQ5FC362P_Y",
+        tahun: "5 January 2024",
+        playlist : ["b", "3", "1", "6", "7", "60"],
+        added: "8 Jan 2024",
+    },
+    {
+        id: 234,
+        judul: "Kerasnya Kota — Davisiumbing",
+        link: "https://www.youtube.com/watch?v=6PH9PRpmSHQ",
+        tahun: "17 November 2023",
+        playlist : ["b", "3", "1", "4", "7", "9"],
+        added: "4 Jan 2024",
+    },
+    {
+        id: 233,
+        judul: "Nemen - Hiphop Dangdut Version — NDX A.K.A.",
+        link: "https://www.youtube.com/watch?v=8CSE_26AaT4",
+        tahun: "28 August 2023",
+        playlist : ["b", "c", "2", "f", "8", "9"],
+        added: "24 Dec 2023",
+    },
+    {
+        id: 232,
+        judul: "Evaluasi — Hindia",
+        link: "https://www.youtube.com/watch?v=sCD_rDDtHCs",
+        tahun: "22 March 2019",
+        playlist : ["b", "2", "7", "9"],
+        added: "24 Dec 2023",
+    },
+    {
+        id: 231,
+        judul: "I Wanna Be Yours — Arctic Monkeys",
+        link: "https://www.youtube.com/watch?v=MEaCzhA6nvI",
+        tahun: "9 September 2013",
+        playlist : ["3", "h", "8", "60"],
+        added: "24 Dec 2023",
+    },
+    {
         id: 230,
         judul: "Satu-Satu — Idgitaf",
         link: "https://www.youtube.com/watch?v=N0_mOLAtacE",
