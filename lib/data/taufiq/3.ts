@@ -2,6 +2,46 @@ import { MusicItem } from '@/lib/musicData';
 
 export const taufiq3: MusicItem[] = [
     {
+        id: 240,
+        judul: "Los Dol — Denny Caknan",
+        link: "https://www.youtube.com/watch?v=fzjuuK5cPo8",
+        tahun: "17 July 2020",
+        playlist : ["b", "3", "f", "5", "7", "9"],
+        added: "21 Jan 2024",
+    },
+    {
+        id: 239,
+        judul: "Asmalibrasi — Soegi Bornean",
+        link: "https://www.youtube.com/watch?v=1mOBQBjodz4",
+        tahun: "11 May 2022",
+        playlist : ["b", "1", "3", "5", "7", "9"],
+        added: "20 Jan 2024",
+    },
+    {
+        id: 238,
+        judul: "NÃO MANDA TOMA NO C# CE SABE QUE EU TO GOSTANDO GORDINHO BOLADO CACAU CHUU ELA KÉ CAVUCADINHA CLIPE - Cacau Chuu, Gordinho Bolado",
+        link: "https://www.youtube.com/watch?v=WzHZwSX03T4",
+        tahun: "1 April 2026",
+        playlist : ["b", "2", "e", "8", "124"],
+        added: "25 November 2026",
+    },
+    {
+        id: 237,
+        judul: "Closed Doors — Ismail",
+        link: "https://www.youtube.com/watch?v=3eidD32Ul9Q",
+        tahun: "23 February 2020",
+        playlist : ["b", "3", "4", "7", "60"],
+        added: "20 Jan 2024",
+    },
+    {
+        id: 236,
+        judul: "Strongest (Alan Walker Remix) — Ina Wroldsen, Alan Walker",
+        link: "https://www.youtube.com/watch?v=rMqT6bvkAIU",
+        tahun: "24 November 2017",
+        playlist : ["b", "2", "1", "5", "7", "60"],
+        added: "8 Jan 2024",
+    },
+    {
         id: 235,
         judul: "Who I Am — Alan Walker, Putri Ariani, Peder Elias",
         link: "https://www.youtube.com/watch?v=xQ5FC362P_Y",
